@@ -365,6 +365,50 @@ const Topbar = () => {
   );
 };
 
+const ScrollToTopButton = () => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Show button if scrolled past 400px
+      if (window.scrollY > 400) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.5, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.5, y: 20 }}
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 p-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-colors focus:outline-none"
+          title="Scroll to Top"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const Home = () => {
   return (
     <div className="relative">
@@ -382,6 +426,8 @@ const Home = () => {
       <footer className="text-center py-8 opacity-50 text-sm">
         © {new Date().getFullYear()} Portfolio. All rights reserved.
       </footer>
+
+      <ScrollToTopButton />
     </div>
   );
 };
