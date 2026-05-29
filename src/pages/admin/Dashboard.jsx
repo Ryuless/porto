@@ -141,7 +141,8 @@ const Dashboard = () => {
         finalImageUrl = await getDownloadURL(storageRef);
       }
 
-      const tagsArray = category === 'Web Development' 
+      const isWebDev = category === 'Web Development';
+      const tagsArray = isWebDev 
         ? techStack.split(',').map(tag => tag.trim()).filter(Boolean)
         : softwareUsed.split(',').map(tag => tag.trim()).filter(Boolean);
 
@@ -151,9 +152,9 @@ const Dashboard = () => {
         watermark: "© 2026 Hak Cipta Paten Nexus - Tidak dapat diubah",
         category,
         imageUrl: finalImageUrl,
-        ...(category === 'Web Development' && projectUrl ? { projectUrl } : {}),
+        ...(isWebDev && projectUrl ? { projectUrl } : {}),
         updatedAt: serverTimestamp(),
-        ...(category === 'Web Development' ? { technologies: tagsArray } : { softwareUsed: tagsArray }),
+        ...(isWebDev ? { technologies: tagsArray } : { softwareUsed: tagsArray }),
       };
 
       if (editingId) {
@@ -474,7 +475,7 @@ const Dashboard = () => {
                     </div>
 
                     <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                      {category === 'Web Development' ? (
+                      {category === 'Web Development' && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                           <label className="block text-sm font-semibold mb-2 text-cyan-400">Coding Tech Stack</label>
                           <p className="text-xs text-slate-500 mb-2">Separate with commas. E.g: React, Node.js, Tailwind</p>
@@ -486,7 +487,9 @@ const Dashboard = () => {
                             className="w-full bg-slate-950 border border-cyan-500/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
                           />
                         </motion.div>
-                      ) : (
+                      )}
+                      
+                      {category === 'Design/Editing' && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                           <label className="block text-sm font-semibold mb-2 text-purple-400">Design Software Used</label>
                           <p className="text-xs text-slate-500 mb-2">Separate with commas. E.g: Photoshop, Figma, Illustrator</p>
@@ -496,6 +499,34 @@ const Dashboard = () => {
                             onChange={(e) => setSoftwareUsed(e.target.value)} 
                             required 
                             className="w-full bg-slate-950 border border-purple-500/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 transition-all"
+                          />
+                        </motion.div>
+                      )}
+
+                      {category === 'Game Development' && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                          <label className="block text-sm font-semibold mb-2 text-emerald-400">Game Engine & Tools</label>
+                          <p className="text-xs text-slate-500 mb-2">Separate with commas. E.g: Unity, Unreal Engine, Blender</p>
+                          <input 
+                            type="text" 
+                            value={softwareUsed} 
+                            onChange={(e) => setSoftwareUsed(e.target.value)} 
+                            required 
+                            className="w-full bg-slate-950 border border-emerald-500/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-all"
+                          />
+                        </motion.div>
+                      )}
+
+                      {category === 'Fotografi' && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                          <label className="block text-sm font-semibold mb-2 text-amber-400">Camera & Gear Used</label>
+                          <p className="text-xs text-slate-500 mb-2">Separate with commas. E.g: Sony A7III, 50mm f/1.8, Lightroom</p>
+                          <input 
+                            type="text" 
+                            value={softwareUsed} 
+                            onChange={(e) => setSoftwareUsed(e.target.value)} 
+                            required 
+                            className="w-full bg-slate-950 border border-amber-500/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 transition-all"
                           />
                         </motion.div>
                       )}
