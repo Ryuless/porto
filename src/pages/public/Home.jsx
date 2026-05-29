@@ -45,7 +45,7 @@ const HeroSection = () => {
         <h2 className="text-xl md:text-2xl font-semibold mb-4 tracking-widest uppercase opacity-80">
           Welcome to my universe
         </h2>
-        <h1 className="text-5xl md:text-7xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
+        <h1 className="text-5xl md:text-7xl font-black mb-6 pb-2 leading-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
           <Typewriter text="I'm a Full-Stack Developer & Designer." delay={60} />
         </h1>
         <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10 opacity-75">
@@ -252,6 +252,55 @@ const ProjectsSection = () => {
   );
 };
 
+const SocialMediaSection = () => {
+  const socials = [
+    { name: 'Instagram', label: 'Instagram', url: '#', color: 'from-pink-500 to-orange-400' },
+    { name: 'TikTok', label: 'TikTok', url: '#', color: 'from-black to-slate-800' },
+    { name: 'LinkedIn', label: 'LinkedIn', url: '#', color: 'from-blue-600 to-blue-400' },
+    { name: 'Linktree', label: 'Linktree', url: '#', color: 'from-green-500 to-emerald-400' },
+    { name: 'Discord Profile', label: 'Discord', desc: 'Profile', url: '#', color: 'from-indigo-500 to-purple-500' },
+    { name: 'Discord Server', label: 'Discord', desc: 'Tempat Nongkrong', url: '#', color: 'from-indigo-600 to-purple-600' }
+  ];
+
+  return (
+    <section id="social" className="py-20 px-6 max-w-5xl mx-auto text-center">
+      <div className="mb-16">
+        <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 inline-block">
+          Connect With Me
+        </h2>
+        <p className="mt-4 opacity-70">Find me across the digital universe.</p>
+      </div>
+      
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+        {socials.map((social, idx) => (
+          <motion.a
+            key={social.name}
+            href={social.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: idx * 0.1 }}
+            whileHover={{ scale: 1.05, y: -5 }}
+            className={`p-6 rounded-2xl flex flex-col items-center justify-center bg-gradient-to-br ${social.color} shadow-lg relative overflow-hidden group`}
+          >
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all duration-300" />
+            <div className="relative z-10 text-white flex flex-col items-center">
+              <span className="font-bold text-xl tracking-wide">{social.name}</span>
+              {social.desc && (
+                <span className="mt-2 text-xs py-1 px-3 bg-white/20 rounded-full font-medium">
+                  {social.desc}
+                </span>
+              )}
+            </div>
+          </motion.a>
+        ))}
+      </div>
+    </section>
+  );
+};
+
 const ContactSection = () => {
   return (
     <section id="contact" className="py-20 px-6 max-w-3xl mx-auto text-center">
@@ -309,6 +358,8 @@ const Home = () => {
       <SkillsSection />
       <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       <ProjectsSection />
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <SocialMediaSection />
       <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       <ContactSection />
       
