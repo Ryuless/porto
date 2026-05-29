@@ -62,12 +62,12 @@ const HeroSection = () => {
             Explore Work
           </motion.button>
           <motion.button 
-            onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 border border-cyan-500/50 hover:bg-cyan-500/10 font-bold rounded-full transition-all"
+            className="px-8 py-3 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 font-bold rounded-full transition-all"
           >
-            Contact Me
+            Skills Matrix
           </motion.button>
           <motion.button 
             onClick={() => document.getElementById('social')?.scrollIntoView({ behavior: 'smooth' })}
@@ -76,6 +76,14 @@ const HeroSection = () => {
             className="px-8 py-3 border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 font-bold rounded-full transition-all"
           >
             Social Media
+          </motion.button>
+          <motion.button 
+            onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-8 py-3 border border-cyan-500/50 hover:bg-cyan-500/10 font-bold rounded-full transition-all"
+          >
+            Contact Me
           </motion.button>
         </div>
       </motion.div>
