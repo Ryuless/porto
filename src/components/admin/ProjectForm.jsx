@@ -70,6 +70,8 @@ const ProjectForm = () => {
           >
             <option value="Web Development">Web Development</option>
             <option value="Design/Editing">Design / Multimedia</option>
+            <option value="Fotografi">Fotografi</option>
+            <option value="Game Development">Game Development</option>
           </select>
         </div>
 

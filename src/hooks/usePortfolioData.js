@@ -28,26 +28,46 @@ export const usePortfolioData = () => {
   // DYNAMIC SKILL SYSTEM: Kalkulasi otomatis berdasarkan data project
   const computedSkills = useMemo(() => {
     const skillCounts = {};
-    const maxProjectsFor100Percent = 5; // Asumsi: 5 proyek dengan skill X membuat bar 100%
+    const totalProjects = projects.length || 1; // Mencegah pembagian dengan nol
+    let maxUsage = 1;
 
     projects.forEach(project => {
-      const tags = project.category === 'Web Development' 
-        ? project.technologies || [] 
-        : project.softwareUsed || [];
+      // Ambil tag/teknologi yang digunakan (handle juga kalau formatnya beda/string)
+      let tags = [];
+      if (Array.isArray(project.technologies)) {
+        tags.push(...project.technologies);
+      } else if (typeof project.technologies === 'string') {
+        tags.push(...project.technologies.split(',').map(t => t.trim()));
+      }
+      
+      if (Array.isArray(project.softwareUsed)) {
+        tags.push(...project.softwareUsed);
+      } else if (typeof project.softwareUsed === 'string') {
+        tags.push(...project.softwareUsed.split(',').map(t => t.trim()));
+      }
 
-      tags.forEach(tag => {
-        // Setiap kali skill digunakan di project, persentasenya naik 20%
-        skillCounts[tag] = (skillCounts[tag] || 0) + (100 / maxProjectsFor100Percent);
+      // Hapus duplikat tag di dalam satu project yang sama
+      const uniqueTags = [...new Set(tags)];
+
+      uniqueTags.forEach(tag => {
+        if (!tag) return;
+        skillCounts[tag] = (skillCounts[tag] || 0) + 1;
+        if (skillCounts[tag] > maxUsage) {
+          maxUsage = skillCounts[tag];
+        }
       });
     });
 
-    // Format output untuk UI dan batasi maksimal 100%
+    // Format output untuk UI, skill di-scale berdasarkan pembagian semua project
     return Object.entries(skillCounts)
-      .map(([name, progress]) => ({
+      .map(([name, count]) => ({
         name,
-        progress: Math.min(progress, 100)
+        count,
+        // Scale dinamis: membandingkan kemunculan skill dengan total keseluruhan project yang ada di database
+        progress: totalProjects > 0 ? Math.min((count / totalProjects) * 100, 100) : 0
       }))
-      .sort((a, b) => b.progress - a.progress); // Urutkan dari persentase tertinggi
+      .sort((a, b) => b.progress - a.progress) // Urutkan dari persentase tertinggi
+      .slice(0, 15); // Batasi maksimal 15 skill teratas di Home
   }, [projects]);
 
   return { projects, skills: computedSkills, loading };

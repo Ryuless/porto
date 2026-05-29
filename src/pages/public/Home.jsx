@@ -76,7 +76,8 @@ const HeroSection = () => {
 };
 
 const SkillsSection = () => {
-  const { skills, loading } = usePortfolioData();
+  const { projects, skills, loading } = usePortfolioData();
+  const totalProjects = projects.length;
 
   return (
     <section id="about" className="py-20 px-6 max-w-5xl mx-auto">
@@ -84,7 +85,13 @@ const SkillsSection = () => {
         <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 inline-block">
           Dynamic Skill Matrix
         </h2>
-        <p className="mt-4 opacity-70">Skills leveled up based on completed projects.</p>
+        <div className="mt-4 flex flex-col items-center justify-center space-y-2">
+          <p className="opacity-70">Skills leveled up based on completed projects.</p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full">
+            <span className="text-sm opacity-70">Total Portfolio Projects:</span>
+            <span className="font-mono text-lg text-cyan-400 font-bold">{totalProjects}</span>
+          </div>
+        </div>
       </div>
 
       {loading ? (
@@ -100,8 +107,13 @@ const SkillsSection = () => {
               key={skill.name} 
               className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10"
             >
-              <div className="flex justify-between mb-2">
-                <span className="font-semibold">{skill.name}</span>
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold text-lg">{skill.name}</span>
+                  <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-white/70">
+                    {skill.count} Project{skill.count > 1 ? 's' : ''}
+                  </span>
+                </div>
                 <span className="font-mono text-cyan-400">{Math.round(skill.progress)}%</span>
               </div>
               <div className="h-3 w-full bg-black/40 rounded-full overflow-hidden">
@@ -124,9 +136,16 @@ const SkillsSection = () => {
 const ProjectsSection = () => {
   const { projects, loading } = usePortfolioData();
   const [filter, setFilter] = useState('All');
+  const [visibleCount, setVisibleCount] = useState(3);
 
-  const categories = ['All', 'Web Development', 'Design/Editing'];
+  const categories = ['All', 'Web Development', 'Design/Editing', 'Fotografi', 'Game Development'];
   const filteredProjects = filter === 'All' ? projects : projects.filter(p => p.category === filter);
+  const displayedProjects = filteredProjects.slice(0, visibleCount);
+
+  const handleFilterChange = (cat) => {
+    setFilter(cat);
+    setVisibleCount(3); // Reset to 3 when switching category
+  };
 
   return (
     <section id="projects" className="py-20 px-6 max-w-7xl mx-auto">
@@ -140,7 +159,7 @@ const ProjectsSection = () => {
         {categories.map(cat => (
           <button
             key={cat}
-            onClick={() => setFilter(cat)}
+            onClick={() => handleFilterChange(cat)}
             className={`px-6 py-2 rounded-full font-medium transition-all ${
               filter === cat 
                 ? 'bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.5)]' 
@@ -155,9 +174,10 @@ const ProjectsSection = () => {
       {loading ? (
         <div className="text-center animate-pulse">Loading projects...</div>
       ) : (
-        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <AnimatePresence>
-            {filteredProjects.map((project) => {
+        <>
+          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <AnimatePresence>
+              {displayedProjects.map((project) => {
               const isWeb = project.category === 'Web Development';
               // Jika Web Dev dan punya URL, arahkan ke URL eksternalnya. Jika Design, ke halaman detail.
               const targetUrl = isWeb ? (project.projectUrl || '#') : `/project/${project.id}`;
@@ -214,6 +234,19 @@ const ProjectsSection = () => {
             })}
           </AnimatePresence>
         </motion.div>
+
+        {/* View More Button */}
+        {filteredProjects.length > visibleCount && (
+          <div className="mt-12 text-center">
+            <Link 
+              to="/projects"
+              className="inline-block px-8 py-3 bg-white/5 border border-white/20 hover:bg-white/10 hover:border-cyan-500/50 rounded-full font-bold transition-all shadow-[0_0_10px_rgba(255,255,255,0.05)] hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] text-cyan-50"
+            >
+              View More Projects &rarr;
+            </Link>
+          </div>
+        )}
+        </>
       )}
     </section>
   );

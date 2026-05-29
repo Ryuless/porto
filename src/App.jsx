@@ -8,6 +8,7 @@ import Dashboard from './pages/admin/Dashboard';
 import { useAuth } from './context/AuthContext';
 import Home from './pages/public/Home';
 import ProjectDetail from './pages/public/ProjectDetail';
+import ProjectsPage from './pages/public/ProjectsPage';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/admin/login" element={<Login />} />
             <Route 

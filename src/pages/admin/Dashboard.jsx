@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePortfolioData } from '../../hooks/usePortfolioData';
-import { collection, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '../../firebase/config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +11,7 @@ const Dashboard = () => {
   const { logout } = useAuth();
   const { projects, skills, loading } = usePortfolioData();
   const [activeTab, setActiveTab] = useState('overview');
+  const [editingId, setEditingId] = useState(null);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -41,6 +42,41 @@ const Dashboard = () => {
   const webProjects = projects.filter(p => p.category === 'Web Development').length;
   const designProjects = projects.filter(p => p.category === 'Design/Editing').length;
   const totalProjects = projects.length;
+
+  const clearForm = () => {
+    setTitle('');
+    setDescription('');
+    setCategory('Web Development');
+    setTechStack('');
+    setSoftwareUsed('');
+    setProjectUrl('');
+    setImageUrl('');
+    setImageFile(null);
+    setImagePreview('');
+    setEditingId(null);
+  };
+
+  const handleEdit = (project) => {
+    setEditingId(project.id);
+    setTitle(project.title);
+    setDescription(project.description || '');
+    setCategory(project.category);
+    
+    if (project.category === 'Web Development') {
+      setTechStack((project.technologies || []).join(', '));
+      setProjectUrl(project.projectUrl || '');
+    } else {
+      setSoftwareUsed((project.softwareUsed || []).join(', '));
+    }
+
+    if (project.imageUrl) {
+      setUploadMode('link');
+      setImageUrl(project.imageUrl);
+      setImagePreview(project.imageUrl);
+    }
+    
+    setActiveTab('add'); // Ganti tab ka form
+  };
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -112,28 +148,32 @@ const Dashboard = () => {
       const projectData = {
         title,
         description,
-        watermark: "© 2026 Hak Cipta @Kanzaki.Ryuu - Tidak dapat diubah",
+        watermark: "© 2026 Hak Cipta Paten Nexus - Tidak dapat diubah",
         category,
-        imageUrl: finalImageUrl,        ...(category === 'Web Development' && projectUrl ? { projectUrl } : {}),        createdAt: serverTimestamp(),
+        imageUrl: finalImageUrl,
+        ...(category === 'Web Development' && projectUrl ? { projectUrl } : {}),
+        updatedAt: serverTimestamp(),
         ...(category === 'Web Development' ? { technologies: tagsArray } : { softwareUsed: tagsArray }),
       };
 
-      await withTimeout(
-        addDoc(collection(db, 'projects'), projectData), 
-        10000, 
-        "Database tidak merespon (Timeout). Cek Firestore Rules Anda."
-      );
+      if (editingId) {
+        await withTimeout(
+          updateDoc(doc(db, 'projects', editingId), projectData), 
+          10000, 
+          "Database tidak merespon (Timeout). Cek Firestore Rules Anda."
+        );
+        alert('Proyek berhasil diperbarui!');
+      } else {
+        projectData.createdAt = serverTimestamp();
+        await withTimeout(
+          addDoc(collection(db, 'projects'), projectData), 
+          10000, 
+          "Database tidak merespon (Timeout). Cek Firestore Rules Anda."
+        );
+        alert('Proyek berhasil ditambahkan!');
+      }
       
-      // Reset Form State
-      setTitle('');
-      setDescription('');
-      setTechStack('');
-      setSoftwareUsed('');
-      setProjectUrl('');
-      setImageUrl('');
-      setImageFile(null);
-      setImagePreview('');
-      alert('Proyek berhasil ditambahkan!');
+      clearForm();
       setActiveTab('list');
     } catch (error) {
       console.error(error);
@@ -171,8 +211,11 @@ const Dashboard = () => {
             📊 Dashboard Overview
           </button>
           <button 
-            onClick={() => setActiveTab('add')}
-            className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'add' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
+            onClick={() => {
+              setActiveTab('add');
+              clearForm();
+            }}
+            className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'add' && !editingId ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
           >
             ✨ Add New Project
           </button>
@@ -276,7 +319,7 @@ const Dashboard = () => {
               </motion.div>
             )}
 
-            {/* ADD TAB */}
+              {/* ADD/EDIT TAB */}
             {activeTab === 'add' && (
               <motion.div 
                 key="add"
@@ -286,7 +329,9 @@ const Dashboard = () => {
                 className="max-w-2xl mx-auto"
               >
                 <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold mb-6 text-white">Create New Project</h2>
+                  <h2 className="text-2xl font-bold mb-6 text-white">
+                    {editingId ? "Edit Project" : "Create New Project"}
+                  </h2>
                   <form onSubmit={handleAddProject} className="space-y-6">
                     <div>
                       <label className="block text-sm font-semibold mb-2 text-slate-400">Project Title</label>
@@ -331,6 +376,8 @@ const Dashboard = () => {
                       >
                         <option value="Web Development">💻 Web Development</option>
                         <option value="Design/Editing">🎨 Design / Multimedia</option>
+                        <option value="Fotografi">📸 Fotografi</option>
+                        <option value="Game Development">🎮 Game Development</option>
                       </select>
                     </div>
 
@@ -459,8 +506,17 @@ const Dashboard = () => {
                       disabled={isSubmitting}
                       className="w-full py-4 mt-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(8,145,178,0.2)] disabled:opacity-50"
                     >
-                      {isSubmitting ? 'Publishing to Database...' : 'Publish Project'}
+                      {isSubmitting ? 'Publishing to Database...' : editingId ? 'Update Project' : 'Publish Project'}
                     </button>
+                    {editingId && (
+                      <button 
+                        type="button" 
+                        onClick={clearForm}
+                        className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all mt-2"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
                   </form>
                 </div>
               </motion.div>
@@ -512,7 +568,13 @@ const Dashboard = () => {
                               <td className="py-3 px-4 max-w-[200px] truncate text-slate-400 text-sm">
                                 {(p.technologies || p.softwareUsed || []).join(', ')}
                               </td>
-                              <td className="py-3 px-4 text-right">
+                              <td className="py-3 px-4 text-right flex justify-end gap-2">
+                                <button 
+                                  onClick={() => handleEdit(p)}
+                                  className="text-cyan-400 hover:text-cyan-300 text-sm px-3 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-lg transition-colors border border-cyan-500/20"
+                                >
+                                  Edit
+                                </button>
                                 <button 
                                   onClick={() => handleDelete(p.id)}
                                   className="text-red-400 hover:text-red-300 text-sm px-3 py-1 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors border border-red-500/20"
