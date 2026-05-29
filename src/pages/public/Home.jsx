@@ -23,7 +23,7 @@ const Typewriter = ({ text, delay = 100 }) => {
 
 const HeroSection = () => {
   return (
-    <section className="min-h-screen flex flex-col justify-center items-center text-center px-4 relative overflow-hidden">
+    <section className="min-h-screen flex flex-col justify-center items-center text-center px-4 pt-24 pb-10 relative overflow-hidden">
       {/* 3D / Floating Elements Background (Abstract visual) */}
       <motion.div 
         animate={{ y: [0, -20, 0], rotate: [0, 5, -5, 0] }}
@@ -52,12 +52,12 @@ const HeroSection = () => {
           Crafting premium digital experiences through seamless code and striking visual design.
         </p>
 
-        <div className="flex flex-wrap gap-4 justify-center">
+        <div className="flex flex-wrap gap-4 justify-center w-full max-w-4xl mx-auto">
           <motion.button 
             onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-full shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all"
+            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-full shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all"
           >
             Explore Work
           </motion.button>
@@ -65,7 +65,7 @@ const HeroSection = () => {
             onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 font-bold rounded-full transition-all"
+            className="w-full sm:w-auto px-8 py-3 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 font-bold rounded-full transition-all"
           >
             Skills Matrix
           </motion.button>
@@ -73,7 +73,7 @@ const HeroSection = () => {
             onClick={() => document.getElementById('social')?.scrollIntoView({ behavior: 'smooth' })}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 font-bold rounded-full transition-all"
+            className="w-full sm:w-auto px-8 py-3 border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 font-bold rounded-full transition-all"
           >
             Social Media
           </motion.button>
@@ -81,7 +81,7 @@ const HeroSection = () => {
             onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-8 py-3 border border-cyan-500/50 hover:bg-cyan-500/10 font-bold rounded-full transition-all"
+            className="w-full sm:w-auto px-8 py-3 border border-cyan-500/50 hover:bg-cyan-500/10 font-bold rounded-full transition-all"
           >
             Contact Me
           </motion.button>
@@ -171,12 +171,12 @@ const ProjectsSection = () => {
         </h2>
       </div>
 
-      <div className="flex justify-center gap-4 mb-12 flex-wrap">
+      <div className="flex justify-start md:justify-center gap-2 md:gap-4 mb-12 overflow-x-auto md:overflow-visible pb-4 md:pb-0 px-2 md:px-0 flex-nowrap md:flex-wrap snap-x hide-scrollbar">
         {categories.map(cat => (
           <button
             key={cat}
             onClick={() => handleFilterChange(cat)}
-            className={`px-6 py-2 rounded-full font-medium transition-all ${
+            className={`whitespace-nowrap snap-center text-sm md:text-base px-5 py-2 md:px-6 md:py-2 rounded-full font-medium transition-all ${
               filter === cat 
                 ? 'bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.5)]' 
                 : 'bg-white/5 border border-white/10 hover:bg-white/10'
