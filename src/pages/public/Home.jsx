@@ -269,17 +269,41 @@ const ProjectsSection = () => {
 };
 
 const SocialMediaSection = () => {
+  const [popupData, setPopupData] = useState(null);
+
   const socials = [
-    { name: 'Instagram', label: 'Instagram', url: '#', color: 'from-pink-500 to-orange-400' },
+    { 
+      name: 'Instagram', 
+      label: 'Instagram', 
+      accounts: [
+        { label: 'First Account', url: 'https://www.instagram.com/kanzaki.ryuu' },
+        { label: 'Second Account', url: 'https://www.instagram.com/yuu__kanzaki' }
+      ],
+      color: 'from-pink-500 to-orange-400' 
+    },
     { name: 'TikTok', label: 'TikTok', url: '#', color: 'from-black to-slate-800' },
     { name: 'LinkedIn', label: 'LinkedIn', url: '#', color: 'from-blue-600 to-blue-400' },
-    { name: 'Linktree', label: 'Linktree', url: '#', color: 'from-green-500 to-emerald-400' },
-    { name: 'Discord Profile', label: 'Discord', desc: 'Profile', url: '#', color: 'from-indigo-500 to-purple-500' },
-    { name: 'Discord Server', label: 'Discord', desc: 'Tempat Nongkrong', url: '#', color: 'from-indigo-600 to-purple-600' }
+    { name: 'Linktree', label: 'Linktree', url: 'https://linktr.ee/yuukanzaki', color: 'from-green-500 to-emerald-400' },
+    { name: 'Discord Profile', label: 'Discord', desc: 'Profile', url: 'https://discord.gg/rC42hrxV', color: 'from-indigo-500 to-purple-500' },
+    { name: 'Discord Server', label: 'Discord', desc: 'Tempat Nongkrong', url: 'https://discord.gg/jGNGWm8wFp', color: 'from-indigo-600 to-purple-600' }
   ];
 
+  const CardContent = ({ social }) => (
+    <>
+      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all duration-300" />
+      <div className="relative z-10 text-white flex flex-col items-center">
+        <span className="font-bold text-xl tracking-wide">{social.name}</span>
+        {social.desc && (
+          <span className="mt-2 text-xs py-1 px-3 bg-white/20 rounded-full font-medium">
+            {social.desc}
+          </span>
+        )}
+      </div>
+    </>
+  );
+
   return (
-    <section id="social" className="py-20 px-6 max-w-5xl mx-auto text-center">
+    <section id="social" className="py-20 px-6 max-w-5xl mx-auto text-center relative">
       <div className="mb-16">
         <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 inline-block">
           Connect With Me
@@ -288,31 +312,92 @@ const SocialMediaSection = () => {
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-        {socials.map((social, idx) => (
-          <motion.a
-            key={social.name}
-            href={social.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: idx * 0.1 }}
-            whileHover={{ scale: 1.05, y: -5 }}
-            className={`p-6 rounded-2xl flex flex-col items-center justify-center bg-gradient-to-br ${social.color} shadow-lg relative overflow-hidden group`}
-          >
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all duration-300" />
-            <div className="relative z-10 text-white flex flex-col items-center">
-              <span className="font-bold text-xl tracking-wide">{social.name}</span>
-              {social.desc && (
-                <span className="mt-2 text-xs py-1 px-3 bg-white/20 rounded-full font-medium">
-                  {social.desc}
-                </span>
-              )}
-            </div>
-          </motion.a>
-        ))}
+        {socials.map((social, idx) => {
+          const cardClass = `p-6 rounded-2xl flex flex-col items-center justify-center bg-gradient-to-br ${social.color} shadow-lg relative overflow-hidden group w-full cursor-pointer`;
+          
+          if (social.accounts) {
+            return (
+              <motion.button
+                key={social.name}
+                onClick={() => setPopupData(social)}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+                className={cardClass}
+              >
+                <CardContent social={social} />
+              </motion.button>
+            );
+          }
+
+          return (
+            <motion.a
+              key={social.name}
+              href={social.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: idx * 0.1 }}
+              whileHover={{ scale: 1.05, y: -5 }}
+              className={cardClass}
+            >
+              <CardContent social={social} />
+            </motion.a>
+          );
+        })}
       </div>
+
+      <AnimatePresence>
+        {popupData && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPopupData(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-slate-900 border border-slate-700/50 p-8 rounded-3xl flex flex-col gap-4 w-full max-w-sm shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+            >
+              <div className="text-center mb-2">
+                <h3 className={`text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r ${popupData.color}`}>
+                  {popupData.name}
+                </h3>
+                <p className="text-slate-400 text-sm mt-2">Pilih akun yang ingin dituju</p>
+              </div>
+              
+              <div className="flex flex-col gap-3">
+                {popupData.accounts.map(acc => (
+                  <a 
+                    key={acc.label} 
+                    href={acc.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-4 bg-slate-800/80 hover:bg-slate-700 rounded-xl text-center font-bold text-white transition-all border border-slate-600 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                  >
+                    {acc.label}
+                  </a>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => setPopupData(null)} 
+                className="mt-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-all"
+              >
+                Tutup
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
