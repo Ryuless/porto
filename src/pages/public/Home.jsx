@@ -52,23 +52,31 @@ const HeroSection = () => {
           Crafting premium digital experiences through seamless code and striking visual design.
         </p>
 
-        <div className="flex gap-4 justify-center">
-          <motion.a 
-            href="#projects"
+        <div className="flex flex-wrap gap-4 justify-center">
+          <motion.button 
+            onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-full shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all"
           >
             Explore Work
-          </motion.a>
-          <motion.a 
-            href="#contact"
+          </motion.button>
+          <motion.button 
+            onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="px-8 py-3 border border-cyan-500/50 hover:bg-cyan-500/10 font-bold rounded-full transition-all"
           >
             Contact Me
-          </motion.a>
+          </motion.button>
+          <motion.button 
+            onClick={() => document.getElementById('social')?.scrollIntoView({ behavior: 'smooth' })}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-8 py-3 border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 font-bold rounded-full transition-all"
+          >
+            Social Media
+          </motion.button>
         </div>
       </motion.div>
     </section>
