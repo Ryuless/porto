@@ -285,7 +285,7 @@ const SocialMediaSection = () => {
     { name: 'LinkedIn', label: 'LinkedIn', url: '#', color: 'from-blue-600 to-blue-400' },
     { name: 'Linktree', label: 'Linktree', url: 'https://linktr.ee/yuukanzaki', color: 'from-green-500 to-emerald-400' },
     { name: 'Discord Profile', label: 'Discord', desc: 'Profile', url: 'https://discord.gg/rC42hrxV', color: 'from-indigo-500 to-purple-500' },
-    { name: 'Discord Server', label: 'Discord', desc: 'Tempat Nongkrong', url: 'https://discord.gg/jGNGWm8wFp', color: 'from-indigo-600 to-purple-600' }
+    { name: 'Discord Server', label: 'Discord', desc: 'Tempat Nongkrong', url: 'https://discord.gg/95H23cEdHE', color: 'from-indigo-600 to-purple-600' }
   ];
 
   const CardContent = ({ social }) => (
