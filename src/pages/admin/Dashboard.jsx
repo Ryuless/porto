@@ -326,8 +326,8 @@ const Dashboard = () => {
                   </div>
                   <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl">
                     <h3 className="text-slate-400 text-sm font-semibold tracking-wider mb-4">PROJECT RATIO</h3>
-                    <div className="flex flex-col sm:flex-row items-end gap-4">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
+                      <div className="w-full sm:flex-1">
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-cyan-400">Web Dev</span>
                           <span>{webProjects}</span>
@@ -336,7 +336,7 @@ const Dashboard = () => {
                           <div className="h-full bg-cyan-400" style={{ width: totalProjects ? `${(webProjects/totalProjects)*100}%` : '0%' }} />
                         </div>
                       </div>
-                      <div className="flex-1">
+                      <div className="w-full sm:flex-1">
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-purple-400">Design</span>
                           <span>{designProjects}</span>
