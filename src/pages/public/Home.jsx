@@ -92,17 +92,17 @@ const HeroSection = () => {
 };
 
 const SkillsSection = () => {
-  const { projects, skills, loading } = usePortfolioData();
+  const { projects, categories, loading } = usePortfolioData();
   const totalProjects = projects.length;
 
   return (
     <section id="about" className="py-20 px-6 max-w-5xl mx-auto">
       <div className="mb-16 text-center">
         <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 inline-block">
-          Dynamic Skill Matrix
+          Dynamic Category Matrix
         </h2>
         <div className="mt-4 flex flex-col items-center justify-center space-y-2">
-          <p className="opacity-70">Skills leveled up based on completed projects.</p>
+          <p className="opacity-70">Realtime category distribution based on completed projects.</p>
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full">
             <span className="text-sm opacity-70">Total Portfolio Projects:</span>
             <span className="font-mono text-lg text-cyan-400 font-bold">{totalProjects}</span>
@@ -111,31 +111,31 @@ const SkillsSection = () => {
       </div>
 
       {loading ? (
-        <div className="text-center animate-pulse">Computing skills...</div>
+        <div className="text-center animate-pulse">Computing categories...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {skills.map((skill, index) => (
+          {categories.map((category, index) => (
             <motion.div 
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              key={skill.name} 
+              key={category.name} 
               className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10"
             >
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold text-lg">{skill.name}</span>
+                  <span className="font-semibold text-lg">{category.name}</span>
                   <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-white/70">
-                    {skill.count} Project{skill.count > 1 ? 's' : ''}
+                    {category.count} Project{category.count > 1 ? 's' : ''}
                   </span>
                 </div>
-                <span className="font-mono text-cyan-400">{Math.round(skill.progress)}%</span>
+                <span className="font-mono text-cyan-400">{Math.round(category.progress)}%</span>
               </div>
               <div className="h-3 w-full bg-black/40 rounded-full overflow-hidden">
                 <motion.div 
                   initial={{ width: 0 }}
-                  whileInView={{ width: `${skill.progress}%` }}
+                  whileInView={{ width: `${category.progress}%` }}
                   viewport={{ once: true }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
                   className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_10px_rgba(6,182,212,0.8)]"

@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { logout } = useAuth();
-  const { projects, skills, loading } = usePortfolioData();
+  const { projects, categories, loading } = usePortfolioData();
   const [activeTab, setActiveTab] = useState('overview');
   const [editingId, setEditingId] = useState(null);
 
@@ -369,28 +369,28 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                {/* Realtime Skills Preview */}
+                {/* Realtime Category Preview */}
                 <div className="bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-                    <h3 className="text-lg md:text-xl font-bold">Realtime Skills Preview</h3>
+                    <h3 className="text-lg md:text-xl font-bold">Realtime Category Preview</h3>
                     <span className="w-fit px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">Live from User Page</span>
                   </div>
                   
                   {loading ? (
-                    <div className="text-slate-500 animate-pulse">Computing skills data...</div>
+                    <div className="text-slate-500 animate-pulse">Computing category data...</div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                      {skills.length === 0 && <div className="text-slate-500">No skills data. Add projects first.</div>}
-                      {skills.map(skill => (
-                        <div key={skill.name} className="bg-slate-800/50 p-4 rounded-xl border border-slate-800">
+                      {categories.length === 0 && <div className="text-slate-500">No category data. Add projects first.</div>}
+                      {categories.map(category => (
+                        <div key={category.name} className="bg-slate-800/50 p-4 rounded-xl border border-slate-800">
                           <div className="flex justify-between mb-2 text-sm">
-                            <span className="font-semibold text-slate-200">{skill.name}</span>
-                            <span className="text-cyan-400 font-mono">{Math.round(skill.progress)}%</span>
+                            <span className="font-semibold text-slate-200">{category.name}</span>
+                            <span className="text-cyan-400 font-mono">{Math.round(category.progress)}%</span>
                           </div>
                           <div className="h-2 bg-slate-950 rounded-full overflow-hidden">
                             <div 
                               className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-1000" 
-                              style={{ width: `${skill.progress}%` }} 
+                              style={{ width: `${category.progress}%` }} 
                             />
                           </div>
                         </div>
