@@ -42,6 +42,8 @@ const Dashboard = () => {
 
   const webProjects = projects.filter(p => p.category === 'Web Development').length;
   const designProjects = projects.filter(p => p.category === 'Design/Editing').length;
+  const photographyProjects = projects.filter(p => p.category === 'Fotografi').length;
+  const gameProjects = projects.filter(p => p.category === 'Game Development').length;
   const totalProjects = projects.length;
 
   const clearForm = () => {
@@ -326,7 +328,7 @@ const Dashboard = () => {
                   </div>
                   <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl">
                     <h3 className="text-slate-400 text-sm font-semibold tracking-wider mb-4">PROJECT RATIO</h3>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
+                    <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-4">
                       <div className="w-full sm:flex-1">
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-cyan-400">Web Dev</span>
@@ -343,6 +345,24 @@ const Dashboard = () => {
                         </div>
                         <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                           <div className="h-full bg-purple-400" style={{ width: totalProjects ? `${(designProjects/totalProjects)*100}%` : '0%' }} />
+                        </div>
+                      </div>
+                      <div className="w-full sm:flex-1">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-amber-400">Fotografi</span>
+                          <span>{photographyProjects}</span>
+                        </div>
+                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-400" style={{ width: totalProjects ? `${(photographyProjects/totalProjects)*100}%` : '0%' }} />
+                        </div>
+                      </div>
+                      <div className="w-full sm:flex-1">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-emerald-400">Game Dev</span>
+                          <span>{gameProjects}</span>
+                        </div>
+                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-400" style={{ width: totalProjects ? `${(gameProjects/totalProjects)*100}%` : '0%' }} />
                         </div>
                       </div>
                     </div>
