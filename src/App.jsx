@@ -19,15 +19,15 @@ function App() {
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/admin/login" element={<Login />} />
+            <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
             <Route 
-              path="/admin" 
+              path="/admin/dashboard" 
               element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
               } 
             />
-            <Route path="/admin/dashboard" element={<Navigate to="/admin" replace />} />
           </Routes>
         </Router>
       </AuthProvider>

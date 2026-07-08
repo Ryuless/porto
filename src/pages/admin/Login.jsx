@@ -20,7 +20,7 @@ const Login = () => {
     try {
       await login(email, password);
       // Pindahkan ke dashboard setelah berhasil login
-      navigate('/admin'); 
+      navigate('/admin/dashboard'); 
     } catch (err) {
       console.error(err);
       setError('Akses ditolak: Email atau Password salah.');
