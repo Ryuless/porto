@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePortfolioData } from '../../hooks/usePortfolioData';
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
@@ -28,6 +28,7 @@ const Dashboard = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   // Helper to get image from regular URL
@@ -195,53 +196,113 @@ const Dashboard = () => {
     }
   };
 
+  const handleTabChange = (tab, resetForm = false) => {
+    setActiveTab(tab);
+    if (resetForm) clearForm();
+    setIsSidebarOpen(false);
+  };
+
+  const handleLogout = () => {
+    setIsSidebarOpen(false);
+    logout();
+  };
+
+  const sidebarContent = (
+    <>
+      <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400">
+          Nexus<span className="text-slate-100">Admin</span>
+        </h2>
+      </div>
+      <nav className="flex-1 p-4 space-y-2">
+        <button
+          onClick={() => handleTabChange('overview')}
+          className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'overview' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
+        >
+          📊 Dashboard Overview
+        </button>
+        <button
+          onClick={() => handleTabChange('add', true)}
+          className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'add' && !editingId ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
+        >
+          ✨ Add New Project
+        </button>
+        <button
+          onClick={() => handleTabChange('list')}
+          className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'list' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
+        >
+          📁 Projects List
+        </button>
+      </nav>
+      <div className="p-4 border-t border-slate-800 space-y-3">
+        <Link
+          to="/"
+          onClick={() => setIsSidebarOpen(false)}
+          className="block w-full text-center py-2 px-4 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors text-slate-300"
+        >
+          👁️ View Live Website
+        </Link>
+        <button
+          onClick={handleLogout}
+          className="w-full py-2 px-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-sm transition-colors"
+        >
+          Logout Securely
+        </button>
+      </div>
+    </>
+  );
+
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-20">
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400">
-            Nexus<span className="text-slate-100">Admin</span>
-          </h2>
-        </div>
-        <nav className="flex-1 p-4 space-y-2">
-          <button 
-            onClick={() => setActiveTab('overview')}
-            className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'overview' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
-          >
-            📊 Dashboard Overview
-          </button>
-          <button 
-            onClick={() => {
-              setActiveTab('add');
-              clearForm();
-            }}
-            className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'add' && !editingId ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
-          >
-            ✨ Add New Project
-          </button>
-          <button 
-            onClick={() => setActiveTab('list')}
-            className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'list' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
-          >
-            📁 Projects List
-          </button>
-        </nav>
-        <div className="p-4 border-t border-slate-800 space-y-3">
-          <Link to="/" className="block w-full text-center py-2 px-4 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors text-slate-300">
-            👁️ View Live Website
-          </Link>
-          <button 
-            onClick={logout}
-            className="w-full py-2 px-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-sm transition-colors"
-          >
-            Logout Securely
-          </button>
-        </div>
+    <div className="flex min-h-screen md:h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
+      <button
+        type="button"
+        onClick={() => setIsSidebarOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-30 px-3 py-2 bg-slate-900/95 border border-slate-700 rounded-lg text-sm text-slate-200 shadow-lg"
+      >
+        ☰ Menu
+      </button>
+
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <>
+            <motion.button
+              type="button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSidebarOpen(false)}
+              className="md:hidden fixed inset-0 z-30 bg-slate-950/70 backdrop-blur-sm"
+              aria-label="Close sidebar overlay"
+            />
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'tween', duration: 0.2 }}
+              className="md:hidden fixed inset-y-0 left-0 z-40 w-[85vw] max-w-[320px] bg-slate-900 border-r border-slate-800 flex flex-col"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-slate-800">
+                <span className="text-sm font-semibold text-slate-300">Navigation</span>
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="px-2 py-1 text-slate-300 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+              {sidebarContent}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
+      <aside className="hidden md:flex w-64 bg-slate-900 border-r border-slate-800 flex-col z-20">
+        {sidebarContent}
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-8 relative">
+      <main className="flex-1 overflow-y-auto px-4 pb-6 pt-20 sm:px-6 md:p-8 relative">
         {/* Glow Effects */}
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
 
@@ -257,15 +318,15 @@ const Dashboard = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-8"
               >
-                <div className="flex gap-6 flex-wrap">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                   {/* Stat Cards */}
-                  <div className="flex-1 min-w-[200px] bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col justify-center">
+                  <div className="lg:col-span-1 bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl flex flex-col justify-center">
                     <h3 className="text-slate-400 text-sm font-semibold tracking-wider mb-2">TOTAL PROJECTS</h3>
-                    <div className="text-5xl font-black text-white">{totalProjects}</div>
+                    <div className="text-4xl md:text-5xl font-black text-white">{totalProjects}</div>
                   </div>
-                  <div className="flex-[2] min-w-[300px] bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                  <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl">
                     <h3 className="text-slate-400 text-sm font-semibold tracking-wider mb-4">PROJECT RATIO</h3>
-                    <div className="flex items-end gap-4">
+                    <div className="flex flex-col sm:flex-row items-end gap-4">
                       <div className="flex-1">
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-cyan-400">Web Dev</span>
@@ -289,16 +350,16 @@ const Dashboard = () => {
                 </div>
 
                 {/* Realtime Skills Preview */}
-                <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold">Realtime Skills Preview</h3>
-                    <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">Live from User Page</span>
+                <div className="bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
+                    <h3 className="text-lg md:text-xl font-bold">Realtime Skills Preview</h3>
+                    <span className="w-fit px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">Live from User Page</span>
                   </div>
                   
                   {loading ? (
                     <div className="text-slate-500 animate-pulse">Computing skills data...</div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                       {skills.length === 0 && <div className="text-slate-500">No skills data. Add projects first.</div>}
                       {skills.map(skill => (
                         <div key={skill.name} className="bg-slate-800/50 p-4 rounded-xl border border-slate-800">
@@ -329,8 +390,8 @@ const Dashboard = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="max-w-2xl mx-auto"
               >
-                <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold mb-6 text-white">
+                <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 md:p-8 rounded-2xl">
+                  <h2 className="text-xl md:text-2xl font-bold mb-6 text-white">
                     {editingId ? "Edit Project" : "Create New Project"}
                   </h2>
                   <form onSubmit={handleAddProject} className="space-y-6">
@@ -397,20 +458,20 @@ const Dashboard = () => {
 
                     {/* Image Upload Feature: Multi-Input */}
                     <div>
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
                         <label className="block text-sm font-semibold text-slate-400">Image Cover</label>
-                        <div className="flex bg-slate-800 rounded-lg p-1">
+                        <div className="flex bg-slate-800 rounded-lg p-1 w-full sm:w-auto">
                           <button 
                             type="button" 
                             onClick={() => setUploadMode('upload')} 
-                            className={`px-3 py-1 text-xs rounded-md transition ${uploadMode === 'upload' ? 'bg-cyan-500 text-white' : 'text-slate-400 hover:text-white'}`}
+                            className={`flex-1 sm:flex-none px-3 py-1 text-xs rounded-md transition ${uploadMode === 'upload' ? 'bg-cyan-500 text-white' : 'text-slate-400 hover:text-white'}`}
                           >
                             Upload/Drag
                           </button>
                           <button 
                             type="button" 
                             onClick={() => setUploadMode('link')} 
-                            className={`px-3 py-1 text-xs rounded-md transition ${uploadMode === 'link' ? 'bg-cyan-500 text-white' : 'text-slate-400 hover:text-white'}`}
+                            className={`flex-1 sm:flex-none px-3 py-1 text-xs rounded-md transition ${uploadMode === 'link' ? 'bg-cyan-500 text-white' : 'text-slate-400 hover:text-white'}`}
                           >
                             Via URL Link
                           </button>
@@ -561,8 +622,8 @@ const Dashboard = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
               >
-                <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                  <h2 className="text-2xl font-bold mb-6">Database Records</h2>
+                <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl">
+                  <h2 className="text-xl md:text-2xl font-bold mb-6">Database Records</h2>
                   
                   {loading ? (
                     <div className="text-center py-10 opacity-50">Fetching from Firebase...</div>
