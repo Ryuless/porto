@@ -25,50 +25,26 @@ export const usePortfolioData = () => {
     return () => unsubscribe();
   }, []);
 
-  // DYNAMIC SKILL SYSTEM: Kalkulasi otomatis berdasarkan data project
-  const computedSkills = useMemo(() => {
-    const skillCounts = {};
+  // DISTRIBUSI KATEGORI: Kalkulasi otomatis berdasarkan data project
+  const computedCategories = useMemo(() => {
+    const categoryCounts = {};
     const totalProjects = projects.length || 1; // Mencegah pembagian dengan nol
-    let maxUsage = 1;
 
     projects.forEach(project => {
-      // Ambil tag/teknologi yang digunakan (handle juga kalau formatnya beda/string)
-      let tags = [];
-      if (Array.isArray(project.technologies)) {
-        tags.push(...project.technologies);
-      } else if (typeof project.technologies === 'string') {
-        tags.push(...project.technologies.split(',').map(t => t.trim()));
-      }
-      
-      if (Array.isArray(project.softwareUsed)) {
-        tags.push(...project.softwareUsed);
-      } else if (typeof project.softwareUsed === 'string') {
-        tags.push(...project.softwareUsed.split(',').map(t => t.trim()));
-      }
-
-      // Hapus duplikat tag di dalam satu project yang sama
-      const uniqueTags = [...new Set(tags)];
-
-      uniqueTags.forEach(tag => {
-        if (!tag) return;
-        skillCounts[tag] = (skillCounts[tag] || 0) + 1;
-        if (skillCounts[tag] > maxUsage) {
-          maxUsage = skillCounts[tag];
-        }
-      });
+      const category = project.category?.trim();
+      if (!category) return;
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
     });
 
-    // Format output untuk UI, skill di-scale berdasarkan pembagian semua project
-    return Object.entries(skillCounts)
+    // Format output untuk UI, persentase berdasarkan total project
+    return Object.entries(categoryCounts)
       .map(([name, count]) => ({
         name,
         count,
-        // Scale dinamis: membandingkan kemunculan skill dengan total keseluruhan project yang ada di database
         progress: totalProjects > 0 ? Math.min((count / totalProjects) * 100, 100) : 0
       }))
-      .sort((a, b) => b.progress - a.progress) // Urutkan dari persentase tertinggi
-      .slice(0, 15); // Batasi maksimal 15 skill teratas di Home
+      .sort((a, b) => b.progress - a.progress);
   }, [projects]);
 
-  return { projects, skills: computedSkills, loading };
+  return { projects, categories: computedCategories, loading };
 };
