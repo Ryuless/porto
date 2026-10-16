@@ -1,19 +1,40 @@
-import { useState, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePortfolioData } from '../../hooks/usePortfolioData';
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '../../firebase/config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+
+const categories = [
+  { name: 'Web Development', short: 'Web', color: 'cyan', icon: '⌁' },
+  { name: 'Design/Editing', short: 'Design', color: 'violet', icon: '✦' },
+  { name: 'Fotografi', short: 'Photo', color: 'amber', icon: '◉' },
+  { name: 'Game Development', short: 'Game', color: 'emerald', icon: '◆' },
+];
+
+const withTimeout = (promise, ms, message) => Promise.race([
+  promise,
+  new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+]);
+
+const formatProjectDate = timestamp => {
+  if (!timestamp) return 'Tanggal belum tersedia';
+  const date = timestamp.toDate?.() || (timestamp instanceof Date ? timestamp : new Date(timestamp));
+  if (Number.isNaN(date.getTime())) return 'Tanggal belum tersedia';
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+};
 
 const Dashboard = () => {
   const { logout } = useAuth();
-  const { projects, categories, loading } = usePortfolioData();
+  const { projects, loading } = usePortfolioData();
   const [activeTab, setActiveTab] = useState('overview');
   const [editingId, setEditingId] = useState(null);
-
-  // Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Web Development');
@@ -21,30 +42,18 @@ const Dashboard = () => {
   const [techStack, setTechStack] = useState('');
   const [softwareUsed, setSoftwareUsed] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Picture Upload State
-  const [uploadMode, setUploadMode] = useState('upload'); // 'upload' or 'link'
+  const [uploadMode, setUploadMode] = useState('upload');
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Helper to get image from regular URL
-  const getProcessedImageUrl = (url) => {
-    if (!url) return '';
-    // Jika url berakhiran gambar, render langsung
-    if (url.match(/\.(jpeg|jpg|gif|png|webp|svg)(\?.*)?$/i)) return url;
-    // Jika tidak, asumsikan ini image URL tanpa ekstensi, render aja langsung.
-    return url;
-  };
-
-  const webProjects = projects.filter(p => p.category === 'Web Development').length;
-  const designProjects = projects.filter(p => p.category === 'Design/Editing').length;
-  const photographyProjects = projects.filter(p => p.category === 'Fotografi').length;
-  const gameProjects = projects.filter(p => p.category === 'Game Development').length;
   const totalProjects = projects.length;
+  const categoryCount = name => projects.filter(project => project.category === name).length;
+  const getProcessedImageUrl = url => url || '';
 
   const clearForm = () => {
     setTitle('');
@@ -57,658 +66,284 @@ const Dashboard = () => {
     setImageFile(null);
     setImagePreview('');
     setEditingId(null);
+    setUploadMode('upload');
   };
 
-  const handleEdit = (project) => {
+  const handleEdit = project => {
     setEditingId(project.id);
     setTitle(project.title);
     setDescription(project.description || '');
     setCategory(project.category);
-    
-    if (project.category === 'Web Development') {
-      setTechStack((project.technologies || []).join(', '));
-      setProjectUrl(project.projectUrl || '');
-    } else {
-      setSoftwareUsed((project.softwareUsed || []).join(', '));
-    }
-
+    setTechStack((project.technologies || []).join(', '));
+    setSoftwareUsed((project.softwareUsed || []).join(', '));
+    setProjectUrl(project.projectUrl || '');
     if (project.imageUrl) {
       setUploadMode('link');
       setImageUrl(project.imageUrl);
       setImagePreview(project.imageUrl);
+    } else {
+      setUploadMode('upload');
+      setImageUrl('');
+      setImagePreview('');
     }
-    
-    setActiveTab('add'); // Ganti tab ka form
+    setActiveTab('add');
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const processFile = (file) => {
+  const processFile = file => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert("Harap masukkan file gambar!");
+      alert('Harap masukkan file gambar!');
       return;
     }
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      processFile(e.target.files[0]);
-    }
-  };
-
-  const handleAddProject = async (e) => {
-    e.preventDefault();
+  const handleAddProject = async event => {
+    event.preventDefault();
     setIsSubmitting(true);
-    
-    const withTimeout = (promise, ms, message) => {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms))
-      ]);
-    };
-
     try {
       let finalImageUrl = '';
-
       if (uploadMode === 'link') {
         finalImageUrl = getProcessedImageUrl(imageUrl);
       } else if (imageFile) {
-        // Mode Upload File to Storage
-        const fileExtension = imageFile.name.split('.').pop();
-        const fileName = `projects/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExtension}`;
-        const storageRef = ref(storage, fileName);
-        
-        await withTimeout(
-          uploadBytes(storageRef, imageFile), 
-          10000, 
-          "Upload gambar pending (Timeout). Cek Storage Rules Firebase Anda."
-        );
+        const extension = imageFile.name.split('.').pop();
+        const storageRef = ref(storage, `projects/${Date.now()}_${Math.random().toString(36).substring(2)}.${extension}`);
+        await withTimeout(uploadBytes(storageRef, imageFile), 10000, 'Upload gambar pending (Timeout).');
         finalImageUrl = await getDownloadURL(storageRef);
       }
 
       const isWebDev = category === 'Web Development';
-      const tagsArray = isWebDev 
-        ? techStack.split(',').map(tag => tag.trim()).filter(Boolean)
-        : softwareUsed.split(',').map(tag => tag.trim()).filter(Boolean);
-
+      const tags = (isWebDev ? techStack : softwareUsed).split(',').map(tag => tag.trim()).filter(Boolean);
       const projectData = {
         title,
         description,
-        watermark: "© 2026 Hak Cipta Paten Nexus - Tidak dapat diubah",
+        watermark: '© 2026 Hak Cipta Paten Nexus - Tidak dapat diubah',
         category,
         imageUrl: finalImageUrl,
         ...(isWebDev && projectUrl ? { projectUrl } : {}),
         updatedAt: serverTimestamp(),
-        ...(isWebDev ? { technologies: tagsArray } : { softwareUsed: tagsArray }),
+        ...(isWebDev ? { technologies: tags } : { softwareUsed: tags }),
       };
 
       if (editingId) {
-        await withTimeout(
-          updateDoc(doc(db, 'projects', editingId), projectData), 
-          10000, 
-          "Database tidak merespon (Timeout). Cek Firestore Rules Anda."
-        );
+        await withTimeout(updateDoc(doc(db, 'projects', editingId), projectData), 10000, 'Database tidak merespon (Timeout).');
         alert('Proyek berhasil diperbarui!');
       } else {
-        projectData.createdAt = serverTimestamp();
-        await withTimeout(
-          addDoc(collection(db, 'projects'), projectData), 
-          10000, 
-          "Database tidak merespon (Timeout). Cek Firestore Rules Anda."
-        );
+        await withTimeout(addDoc(collection(db, 'projects'), { ...projectData, createdAt: serverTimestamp() }), 10000, 'Database tidak merespon (Timeout).');
         alert('Proyek berhasil ditambahkan!');
       }
-      
       clearForm();
       setActiveTab('list');
     } catch (error) {
       console.error(error);
-      alert(`Gagal mempublish proyek!\n\nError: ${error.message}\n\nPastikan aturan Firestore & Firebase Storage Anda diizinkan untuk 'write'.`);
+      alert(`Gagal mempublish proyek!\n\nError: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Yakin ingin menghapus proyek ini?')) {
-      try {
-        await deleteDoc(doc(db, 'projects', id));
-      } catch (error) {
-        console.error(error);
-        alert('Gagal menghapus proyek');
-      }
+  const handleDelete = async id => {
+    if (!window.confirm('Yakin ingin menghapus proyek ini?')) return;
+    try {
+      await deleteDoc(doc(db, 'projects', id));
+    } catch (error) {
+      console.error(error);
+      alert('Gagal menghapus proyek');
     }
   };
 
-  const handleTabChange = (tab, resetForm = false) => {
+  const handleDuplicate = async project => {
+    if (isDuplicating) return;
+    setIsDuplicating(true);
+    try {
+      const duplicateData = {
+        title: `${project.title || 'Untitled project'} (Copy)`,
+        description: project.description || '',
+        watermark: project.watermark || '© 2026 Hak Cipta Paten Nexus - Tidak dapat diubah',
+        category: project.category || 'Web Development',
+        imageUrl: project.imageUrl || '',
+        ...(project.projectUrl ? { projectUrl: project.projectUrl } : {}),
+        ...(project.technologies ? { technologies: [...project.technologies] } : {}),
+        ...(project.softwareUsed ? { softwareUsed: [...project.softwareUsed] } : {}),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+      await withTimeout(addDoc(collection(db, 'projects'), duplicateData), 10000, 'Database tidak merespon (Timeout).');
+      alert('Salinan proyek berhasil dibuat!');
+    } catch (error) {
+      console.error(error);
+      alert(`Gagal menduplikasi proyek!\n\nError: ${error.message}`);
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
+  const exportProjects = () => {
+    const exportData = projects.map(({ id, ...project }) => ({
+      ...project,
+      id,
+      createdAt: project.createdAt?.toDate?.()?.toISOString?.() || null,
+      updatedAt: project.updatedAt?.toDate?.()?.toISOString?.() || null,
+    }));
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const downloadUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = downloadUrl;
+    anchor.download = `portfolio-export-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(downloadUrl);
+  };
+
+  const changeTab = (tab, reset = false) => {
     setActiveTab(tab);
-    if (resetForm) clearForm();
+    if (reset) clearForm();
     setIsSidebarOpen(false);
   };
 
-  const handleLogout = () => {
-    setIsSidebarOpen(false);
-    logout();
-  };
-
-  const sidebarContent = (
+  const sidebar = (
     <>
-      <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400">
-          Nexus<span className="text-slate-100">Admin</span>
-        </h2>
+      <div className="flex items-center gap-3 border-b border-white/10 px-6 py-6">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-400/15 text-xl text-cyan-300">✦</div>
+        <div><p className="text-[10px] uppercase tracking-[0.25em] text-cyan-300">Workspace</p><h1 className="font-bold text-white">Nexus<span className="text-cyan-300">Admin</span></h1></div>
       </div>
-      <nav className="flex-1 p-4 space-y-2">
-        <button
-          onClick={() => handleTabChange('overview')}
-          className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'overview' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
-        >
-          📊 Dashboard Overview
-        </button>
-        <button
-          onClick={() => handleTabChange('add', true)}
-          className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'add' && !editingId ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
-        >
-          ✨ Add New Project
-        </button>
-        <button
-          onClick={() => handleTabChange('list')}
-          className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${activeTab === 'list' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'hover:bg-slate-800 text-slate-400'}`}
-        >
-          📁 Projects List
-        </button>
-      </nav>
-      <div className="p-4 border-t border-slate-800 space-y-3">
-        <Link
-          to="/"
-          onClick={() => setIsSidebarOpen(false)}
-          className="block w-full text-center py-2 px-4 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors text-slate-300"
-        >
-          👁️ View Live Website
-        </Link>
-        <button
-          onClick={handleLogout}
-          className="w-full py-2 px-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg text-sm transition-colors"
-        >
-          Logout Securely
-        </button>
+      <div className="px-4 py-6">
+        <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Manage portfolio</p>
+        <div className="space-y-1.5">
+          <NavButton active={activeTab === 'overview'} onClick={() => changeTab('overview')} icon="▦">Overview</NavButton>
+          <NavButton active={activeTab === 'add' && !editingId} onClick={() => changeTab('add', true)} icon="+">New project</NavButton>
+          <NavButton active={activeTab === 'list'} onClick={() => changeTab('list')} icon="☷">Project library</NavButton>
+        </div>
+      </div>
+      <div className="mt-auto space-y-2 border-t border-white/10 p-4">
+        <Link to="/" onClick={() => setIsSidebarOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white"><span>↗</span> View live site</Link>
+        <button onClick={() => { setIsSidebarOpen(false); logout(); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-rose-300 transition hover:bg-rose-400/10"><span>↪</span> Sign out</button>
       </div>
     </>
   );
 
   return (
-    <div className="flex min-h-screen md:h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      <button
-        type="button"
-        onClick={() => setIsSidebarOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-30 px-3 py-2 bg-slate-900/95 border border-slate-700 rounded-lg text-sm text-slate-200 shadow-lg"
-      >
-        ☰ Menu
-      </button>
-
+    <div className="min-h-screen bg-[#07101c] font-sans text-slate-100 selection:bg-cyan-300 selection:text-slate-950">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-cyan-400/10 blur-[120px]" /><div className="absolute -bottom-48 right-0 h-[32rem] w-[32rem] rounded-full bg-violet-500/10 blur-[140px]" /></div>
+      <button type="button" onClick={() => setIsSidebarOpen(true)} className="fixed left-4 top-4 z-40 rounded-xl border border-white/10 bg-[#0c1828]/90 px-3 py-2 text-sm text-slate-200 shadow-xl backdrop-blur md:hidden">☰ Menu</button>
       <AnimatePresence>
-        {isSidebarOpen && (
-          <>
-            <motion.button
-              type="button"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsSidebarOpen(false)}
-              className="md:hidden fixed inset-0 z-30 bg-slate-950/70 backdrop-blur-sm"
-              aria-label="Close sidebar overlay"
-            />
-            <motion.aside
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'tween', duration: 0.2 }}
-              className="md:hidden fixed inset-y-0 left-0 z-40 w-[85vw] max-w-[320px] bg-slate-900 border-r border-slate-800 flex flex-col"
-            >
-              <div className="flex items-center justify-between p-4 border-b border-slate-800">
-                <span className="text-sm font-semibold text-slate-300">Navigation</span>
-                <button
-                  type="button"
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="px-2 py-1 text-slate-300 hover:text-white"
-                >
-                  ✕
-                </button>
-              </div>
-              {sidebarContent}
-            </motion.aside>
-          </>
-        )}
+        {isSidebarOpen && <><motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-sm" aria-label="Close menu" /><motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="fixed inset-y-0 left-0 z-50 flex w-[82vw] max-w-[300px] flex-col bg-[#0b1727] shadow-2xl md:hidden"><div className="flex justify-end p-3"><button onClick={() => setIsSidebarOpen(false)} className="rounded-lg px-3 py-1 text-slate-400 hover:text-white">✕</button></div>{sidebar}</motion.aside></>}
       </AnimatePresence>
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-white/10 bg-[#0b1727]/95 md:flex">{sidebar}</aside>
 
-      <aside className="hidden md:flex w-64 bg-slate-900 border-r border-slate-800 flex-col z-20">
-        {sidebarContent}
-      </aside>
+      <main className="relative min-h-screen md:ml-64">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-[#07101c]/85 px-5 py-4 backdrop-blur-xl sm:px-8">
+          <div className="pl-14 md:pl-0"><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Nexus Admin / <span className="text-cyan-300">{activeTab}</span></p><h2 className="mt-1 text-lg font-bold text-white sm:text-xl">{activeTab === 'overview' ? 'Good to see you, Ryuu.' : activeTab === 'add' ? (editingId ? 'Edit project' : 'Create something new') : 'Project library'}</h2></div>
+          <div className="flex items-center gap-3"><span className="hidden items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Firebase live</span><div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-violet-400 text-sm font-bold text-slate-950">R</div></div>
+        </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto px-4 pb-6 pt-20 sm:px-6 md:p-8 relative">
-        {/* Glow Effects */}
-        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-500/10 blur-[120px] rounded-full pointer-events-none -z-10" />
-
-        <div className="max-w-6xl mx-auto z-10 relative">
+        <div className="mx-auto max-w-7xl px-5 pb-12 pt-7 sm:px-8">
           <AnimatePresence mode="wait">
-            
-            {/* OVERVIEW TAB */}
-            {activeTab === 'overview' && (
-              <motion.div 
-                key="overview"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-                  {/* Stat Cards */}
-                  <div className="lg:col-span-1 bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl flex flex-col justify-center">
-                    <h3 className="text-slate-400 text-sm font-semibold tracking-wider mb-2">TOTAL PROJECTS</h3>
-                    <div className="text-4xl md:text-5xl font-black text-white">{totalProjects}</div>
-                  </div>
-                  <div className="lg:col-span-2 bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl">
-                    <h3 className="text-slate-400 text-sm font-semibold tracking-wider mb-4">PROJECT RATIO</h3>
-                    <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-4">
-                      <div className="w-full sm:flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-cyan-400">Web Dev</span>
-                          <span>{webProjects}</span>
-                        </div>
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-cyan-400" style={{ width: totalProjects ? `${(webProjects/totalProjects)*100}%` : '0%' }} />
-                        </div>
-                      </div>
-                      <div className="w-full sm:flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-purple-400">Design</span>
-                          <span>{designProjects}</span>
-                        </div>
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-purple-400" style={{ width: totalProjects ? `${(designProjects/totalProjects)*100}%` : '0%' }} />
-                        </div>
-                      </div>
-                      <div className="w-full sm:flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-amber-400">Fotografi</span>
-                          <span>{photographyProjects}</span>
-                        </div>
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-amber-400" style={{ width: totalProjects ? `${(photographyProjects/totalProjects)*100}%` : '0%' }} />
-                        </div>
-                      </div>
-                      <div className="w-full sm:flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-emerald-400">Game Dev</span>
-                          <span>{gameProjects}</span>
-                        </div>
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-400" style={{ width: totalProjects ? `${(gameProjects/totalProjects)*100}%` : '0%' }} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Realtime Category Preview */}
-                <div className="bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
-                    <h3 className="text-lg md:text-xl font-bold">Realtime Category Preview</h3>
-                    <span className="w-fit px-3 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">Live from User Page</span>
-                  </div>
-                  
-                  {loading ? (
-                    <div className="text-slate-500 animate-pulse">Computing category data...</div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                      {categories.length === 0 && <div className="text-slate-500">No category data. Add projects first.</div>}
-                      {categories.map(category => (
-                        <div key={category.name} className="bg-slate-800/50 p-4 rounded-xl border border-slate-800">
-                          <div className="flex justify-between mb-2 text-sm">
-                            <span className="font-semibold text-slate-200">{category.name}</span>
-                            <span className="text-cyan-400 font-mono">{Math.round(category.progress)}%</span>
-                          </div>
-                          <div className="h-2 bg-slate-950 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all duration-1000" 
-                              style={{ width: `${category.progress}%` }} 
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-
-              {/* ADD/EDIT TAB */}
-            {activeTab === 'add' && (
-              <motion.div 
-                key="add"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="max-w-2xl mx-auto"
-              >
-                <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 md:p-8 rounded-2xl">
-                  <h2 className="text-xl md:text-2xl font-bold mb-6 text-white">
-                    {editingId ? "Edit Project" : "Create New Project"}
-                  </h2>
-                  <form onSubmit={handleAddProject} className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-semibold mb-2 text-slate-400">Project Title</label>
-                      <input 
-                        type="text" 
-                        value={title} 
-                        onChange={(e) => setTitle(e.target.value)} 
-                        required 
-                        placeholder="e.g. Nexus Dashboard v2"
-                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold mb-2 text-slate-400">Description</label>
-                      <textarea 
-                        value={description} 
-                        onChange={(e) => setDescription(e.target.value)} 
-                        required 
-                        placeholder="Tuliskan deskripsi proyek..."
-                        rows="3"
-                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-                      ></textarea>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold mb-2 text-slate-400">Watermark Lisensi</label>
-                      <input 
-                        type="text" 
-                        value="© 2026 Hak Cipta @Kanzaki.Ryuu - Tidak dapat diubah" 
-                        readOnly 
-                        className="w-full bg-slate-900 border border-slate-800 text-slate-500 rounded-xl px-4 py-3 cursor-not-allowed select-none"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-semibold mb-2 text-slate-400">Category</label>
-                      <select 
-                        value={category} 
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
-                      >
-                        <option value="Web Development">💻 Web Development</option>
-                        <option value="Design/Editing">🎨 Design / Multimedia</option>
-                        <option value="Fotografi">📸 Fotografi</option>
-                        <option value="Game Development">🎮 Game Development</option>
-                      </select>
-                    </div>
-
-                    {category === 'Web Development' && (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                        <label className="block text-sm font-semibold mb-2 text-slate-400">Live Website URL</label>
-                        <input 
-                          type="url" 
-                          value={projectUrl} 
-                          onChange={(e) => setProjectUrl(e.target.value)} 
-                          placeholder="https://mywebsite.com"
-                          className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-                        />
-                      </motion.div>
-                    )}
-
-                    {/* Image Upload Feature: Multi-Input */}
-                    <div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
-                        <label className="block text-sm font-semibold text-slate-400">Image Cover</label>
-                        <div className="flex bg-slate-800 rounded-lg p-1 w-full sm:w-auto">
-                          <button 
-                            type="button" 
-                            onClick={() => setUploadMode('upload')} 
-                            className={`flex-1 sm:flex-none px-3 py-1 text-xs rounded-md transition ${uploadMode === 'upload' ? 'bg-cyan-500 text-white' : 'text-slate-400 hover:text-white'}`}
-                          >
-                            Upload/Drag
-                          </button>
-                          <button 
-                            type="button" 
-                            onClick={() => setUploadMode('link')} 
-                            className={`flex-1 sm:flex-none px-3 py-1 text-xs rounded-md transition ${uploadMode === 'link' ? 'bg-cyan-500 text-white' : 'text-slate-400 hover:text-white'}`}
-                          >
-                            Via URL Link
-                          </button>
-                        </div>
-                      </div>
-
-                      {uploadMode === 'link' ? (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                          <input 
-                            type="url" 
-                            value={imageUrl} 
-                            onChange={(e) => setImageUrl(e.target.value)} 
-                            placeholder="Contoh: https://i.pinimg.com/xxx/image.jpg (Harus Alamat Gambar / Image Address)"
-                            className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
-                          />
-                          {imageUrl && (
-                            <div className="mt-4 relative">
-                              <p className="text-xs text-cyan-400 mb-2 font-medium">✨ Live Image Preview</p>
-                              <img src={getProcessedImageUrl(imageUrl)} alt="Pastikan link yang dicopy adalah 'Copy Image Address'" className="w-full h-48 object-cover rounded-xl border border-slate-800 bg-slate-900" />
-                            </div>
-                          )}
-                        </motion.div>
-                      ) : (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                          <div 
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => fileInputRef.current?.click()}
-                            className={`w-full h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-colors ${
-                              isDragging ? 'border-cyan-400 bg-cyan-400/10' : 'border-slate-700 bg-slate-950 hover:bg-slate-900 hover:border-slate-500'
-                            }`}
-                          >
-                            {imagePreview ? (
-                              <img src={imagePreview} alt="upload preview" className="w-full h-full object-cover rounded-xl" />
-                            ) : (
-                              <>
-                                <div className="text-3xl mb-2">📁</div>
-                                <p className="text-sm font-medium text-slate-300">Drag & Drop image here</p>
-                                <p className="text-xs text-slate-500 mt-1">or click to browse local file</p>
-                              </>
-                            )}
-                          </div>
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={handleFileChange} 
-                            ref={fileInputRef} 
-                            className="hidden" 
-                          />
-                          {imagePreview && (
-                            <button 
-                              type="button" 
-                              onClick={() => { setImageFile(null); setImagePreview(''); }}
-                              className="mt-2 text-xs text-red-400 hover:text-red-300 transition-colors"
-                            >
-                              Remove Image
-                            </button>
-                          )}
-                        </motion.div>
-                      )}
-                    </div>
-
-                    <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                      {category === 'Web Development' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                          <label className="block text-sm font-semibold mb-2 text-cyan-400">Coding Tech Stack</label>
-                          <p className="text-xs text-slate-500 mb-2">Separate with commas. E.g: React, Node.js, Tailwind</p>
-                          <input 
-                            type="text" 
-                            value={techStack} 
-                            onChange={(e) => setTechStack(e.target.value)} 
-                            required 
-                            className="w-full bg-slate-950 border border-cyan-500/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition-all"
-                          />
-                        </motion.div>
-                      )}
-                      
-                      {category === 'Design/Editing' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                          <label className="block text-sm font-semibold mb-2 text-purple-400">Design Software Used</label>
-                          <p className="text-xs text-slate-500 mb-2">Separate with commas. E.g: Photoshop, Figma, Illustrator</p>
-                          <input 
-                            type="text" 
-                            value={softwareUsed} 
-                            onChange={(e) => setSoftwareUsed(e.target.value)} 
-                            required 
-                            className="w-full bg-slate-950 border border-purple-500/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-purple-500 transition-all"
-                          />
-                        </motion.div>
-                      )}
-
-                      {category === 'Game Development' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                          <label className="block text-sm font-semibold mb-2 text-emerald-400">Game Engine & Tools</label>
-                          <p className="text-xs text-slate-500 mb-2">Separate with commas. E.g: Unity, Unreal Engine, Blender</p>
-                          <input 
-                            type="text" 
-                            value={softwareUsed} 
-                            onChange={(e) => setSoftwareUsed(e.target.value)} 
-                            required 
-                            className="w-full bg-slate-950 border border-emerald-500/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-emerald-500 transition-all"
-                          />
-                        </motion.div>
-                      )}
-
-                      {category === 'Fotografi' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                          <label className="block text-sm font-semibold mb-2 text-amber-400">Camera & Gear Used</label>
-                          <p className="text-xs text-slate-500 mb-2">Separate with commas. E.g: Sony A7III, 50mm f/1.8, Lightroom</p>
-                          <input 
-                            type="text" 
-                            value={softwareUsed} 
-                            onChange={(e) => setSoftwareUsed(e.target.value)} 
-                            required 
-                            className="w-full bg-slate-950 border border-amber-500/30 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-amber-500 transition-all"
-                          />
-                        </motion.div>
-                      )}
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      disabled={isSubmitting}
-                      className="w-full py-4 mt-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(8,145,178,0.2)] disabled:opacity-50"
-                    >
-                      {isSubmitting ? 'Publishing to Database...' : editingId ? 'Update Project' : 'Publish Project'}
-                    </button>
-                    {editingId && (
-                      <button 
-                        type="button" 
-                        onClick={clearForm}
-                        className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all mt-2"
-                      >
-                        Cancel Edit
-                      </button>
-                    )}
-                  </form>
-                </div>
-              </motion.div>
-            )}
-
-            {/* LIST TAB */}
-            {activeTab === 'list' && (
-              <motion.div 
-                key="list"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="bg-slate-900 border border-slate-800 p-4 sm:p-6 rounded-2xl">
-                  <h2 className="text-xl md:text-2xl font-bold mb-6">Database Records</h2>
-                  
-                  {loading ? (
-                    <div className="text-center py-10 opacity-50">Fetching from Firebase...</div>
-                  ) : projects.length === 0 ? (
-                    <div className="text-center py-10 opacity-50">No projects found.</div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse min-w-[600px]">
-                        <thead>
-                          <tr className="border-b border-slate-800 text-slate-500 text-sm">
-                            <th className="py-3 px-4 font-normal">Cover</th>
-                            <th className="py-3 px-4 font-normal">Project Name</th>
-                            <th className="py-3 px-4 font-normal">Category</th>
-                            <th className="py-3 px-4 font-normal">Tags (Skill Trigger)</th>
-                            <th className="py-3 px-4 font-normal text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {projects.map(p => (
-                            <tr key={p.id} className="border-b border-slate-800 hover:bg-slate-800/30 transition-colors">
-                              <td className="py-3 px-4">
-                                {p.imageUrl ? (
-                                  <img src={p.imageUrl} alt="cover" className="w-12 h-12 object-cover rounded-lg bg-slate-800" />
-                                ) : (
-                                  <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center text-xs opacity-50">N/A</div>
-                                )}
-                              </td>
-                              <td className="py-3 px-4 font-medium">{p.title}</td>
-                              <td className="py-3 px-4">
-                                <span className={`px-2 py-1 text-xs rounded-lg ${p.category === 'Web Development' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'}`}>
-                                  {p.category}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 max-w-[200px] truncate text-slate-400 text-sm">
-                                {(p.technologies || p.softwareUsed || []).join(', ')}
-                              </td>
-                              <td className="py-3 px-4 text-right flex justify-end gap-2">
-                                <button 
-                                  onClick={() => handleEdit(p)}
-                                  className="text-cyan-400 hover:text-cyan-300 text-sm px-3 py-1 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-lg transition-colors border border-cyan-500/20"
-                                >
-                                  Edit
-                                </button>
-                                <button 
-                                  onClick={() => handleDelete(p.id)}
-                                  className="text-red-400 hover:text-red-300 text-sm px-3 py-1 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors border border-red-500/20"
-                                >
-                                  Delete
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
+            {activeTab === 'overview' && <Overview key="overview" projects={projects} loading={loading} totalProjects={totalProjects} categoryCount={categoryCount} onAdd={() => changeTab('add', true)} onList={() => changeTab('list')} />}
+            {activeTab === 'add' && <ProjectForm key="add" {...{ title, setTitle, description, setDescription, category, setCategory, projectUrl, setProjectUrl, techStack, setTechStack, softwareUsed, setSoftwareUsed, uploadMode, setUploadMode, imageUrl, setImageUrl, imagePreview, isDragging, setIsDragging, processFile, fileInputRef, isSubmitting, editingId, handleAddProject, clearForm, getProcessedImageUrl }} />}
+            {activeTab === 'list' && <ProjectLibrary key="list" projects={projects} loading={loading} isDuplicating={isDuplicating} onEdit={handleEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} onAdd={() => changeTab('add', true)} onExport={exportProjects} />}
           </AnimatePresence>
-
         </div>
       </main>
     </div>
   );
+};
+
+const NavButton = ({ active, onClick, icon, children }) => <button onClick={onClick} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition ${active ? 'bg-cyan-300/10 text-cyan-200 shadow-[inset_3px_0_0_#67e8f9]' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}><span className={`flex h-7 w-7 items-center justify-center rounded-lg text-base ${active ? 'bg-cyan-300/15 text-cyan-300' : 'bg-white/5 text-slate-500'}`}>{icon}</span>{children}</button>;
+
+const Panel = ({ children, className = '' }) => <div className={`rounded-3xl border border-white/10 bg-[#0d1a2b]/80 shadow-2xl shadow-black/10 ${className}`}>{children}</div>;
+
+const Overview = ({ projects, loading, totalProjects, categoryCount, onAdd, onList }) => (
+  <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} className="space-y-6">
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm text-slate-400">Your portfolio at a glance</p><h3 className="mt-1 text-3xl font-black tracking-tight text-white">Command center</h3></div><button onClick={onAdd} className="rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">+ Add project</button></div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <StatCard label="Total projects" value={totalProjects} meta="Published records" icon="◈" accent="cyan" />
+      <StatCard label="Web development" value={categoryCount('Web Development')} meta="Live experiences" icon="⌁" accent="violet" />
+      <StatCard label="Creative work" value={categoryCount('Design/Editing') + categoryCount('Fotografi')} meta="Visual projects" icon="✦" accent="amber" />
+      <StatCard label="Game development" value={categoryCount('Game Development')} meta="Interactive worlds" icon="◆" accent="emerald" />
+    </div>
+    <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
+      <Panel className="p-6"><div className="mb-6 flex items-center justify-between"><div><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Live analytics</p><h3 className="mt-1 text-lg font-bold text-white">Category distribution</h3></div><span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">Realtime</span></div>{loading ? <LoadingLine /> : <div className="space-y-5">{categories.map(item => <Ratio key={item.name} {...item} count={categoryCount(item.name)} total={totalProjects} />)}</div>}</Panel>
+      <Panel className="flex flex-col justify-between overflow-hidden p-6"><div><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Latest signal</p><h3 className="mt-1 text-lg font-bold text-white">Portfolio health</h3><div className="mt-8 flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10 text-2xl text-cyan-300">✓</div><div><p className="text-2xl font-black text-white">{projects.length ? 'Active' : 'Ready'}</p><p className="text-sm text-slate-400">{projects.length ? 'Your work is online' : 'Add your first project'}</p></div></div></div><button onClick={onList} className="mt-8 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 transition hover:border-cyan-300/30 hover:text-cyan-200">Open project library <span>→</span></button></Panel>
+    </div>
+    <Panel className="p-6"><div className="mb-5 flex items-center justify-between"><div><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Recent work</p><h3 className="mt-1 text-lg font-bold text-white">Latest projects</h3></div><button onClick={onList} className="text-sm text-cyan-300 hover:text-cyan-200">View all →</button></div>{loading ? <LoadingLine /> : projects.length === 0 ? <EmptyState text="No projects yet. Start building your library." /> : <div className="grid gap-3 md:grid-cols-3">{projects.slice(0, 3).map(project => <ProjectMini key={project.id} project={project} />)}</div>}</Panel>
+  </motion.div>
+);
+
+const accentStyles = {
+  cyan: { glow: 'bg-cyan-400/10', icon: 'bg-cyan-400/10 text-cyan-300' },
+  violet: { glow: 'bg-violet-400/10', icon: 'bg-violet-400/10 text-violet-300' },
+  amber: { glow: 'bg-amber-400/10', icon: 'bg-amber-400/10 text-amber-300' },
+  emerald: { glow: 'bg-emerald-400/10', icon: 'bg-emerald-400/10 text-emerald-300' },
+};
+
+const ratioStyles = {
+  cyan: { text: 'text-cyan-300', bar: 'bg-cyan-400' },
+  violet: { text: 'text-violet-300', bar: 'bg-violet-400' },
+  amber: { text: 'text-amber-300', bar: 'bg-amber-400' },
+  emerald: { text: 'text-emerald-300', bar: 'bg-emerald-400' },
+};
+
+const StatCard = ({ label, value, meta, icon, accent }) => {
+  const styles = accentStyles[accent] || accentStyles.cyan;
+  return <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d1a2b]/80 p-5"><div className={`absolute -right-8 -top-8 h-24 w-24 rounded-full ${styles.glow} blur-2xl`} /><div className="relative flex items-start justify-between"><div><p className="text-sm text-slate-400">{label}</p><p className="mt-3 text-4xl font-black text-white">{value}</p><p className="mt-2 text-xs text-slate-500">{meta}</p></div><span className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${styles.icon}`}>{icon}</span></div></div>;
+};
+
+const Ratio = ({ name, count, total, color }) => {
+  const styles = ratioStyles[color] || ratioStyles.cyan;
+  return <div><div className="mb-2 flex justify-between text-sm"><span className="text-slate-300">{name}</span><span className={`font-mono ${styles.text}`}>{count} <span className="text-slate-500">/ {total}</span></span></div><div className="h-2 overflow-hidden rounded-full bg-slate-800"><motion.div initial={{ width: 0 }} animate={{ width: total ? `${(count / total) * 100}%` : '0%' }} transition={{ duration: 0.8 }} className={`h-full rounded-full ${styles.bar}`} /></div></div>;
+};
+const LoadingLine = () => <div className="h-24 animate-pulse rounded-2xl bg-white/5" />;
+const EmptyState = ({ text }) => <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-slate-500">{text}</div>;
+const ProjectMini = ({ project }) => <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3"><div className="h-12 w-12 overflow-hidden rounded-xl bg-slate-800">{project.imageUrl && <img src={project.imageUrl} alt="" className="h-full w-full object-cover" />}</div><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-200">{project.title}</p><p className="mt-1 truncate text-xs text-slate-500">{project.category}</p></div></div>;
+
+const ProjectForm = props => {
+  const { title, setTitle, description, setDescription, category, setCategory, projectUrl, setProjectUrl, techStack, setTechStack, softwareUsed, setSoftwareUsed, uploadMode, setUploadMode, imageUrl, setImageUrl, imagePreview, isDragging, setIsDragging, processFile, fileInputRef, isSubmitting, editingId, handleAddProject, clearForm, getProcessedImageUrl } = props;
+  const tagValue = category === 'Web Development' ? techStack : softwareUsed;
+  const setTagValue = category === 'Web Development' ? setTechStack : setSoftwareUsed;
+  return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} className="mx-auto max-w-5xl">
+    <div className="mb-6 flex items-end justify-between gap-4"><div><p className="text-sm text-slate-400">Portfolio library / editor</p><h3 className="mt-1 text-3xl font-black text-white">{editingId ? 'Edit project' : 'New project'}</h3></div>{editingId && <button onClick={clearForm} className="text-sm text-slate-400 hover:text-white">Cancel edit</button>}</div>
+    <form onSubmit={handleAddProject} className="grid gap-6 xl:grid-cols-[1fr_0.75fr]">
+      <Panel className="space-y-5 p-6">
+        <Field label="Project title"><input required value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Nexus Dashboard v2" className="admin-input" /></Field>
+        <Field label="Description"><textarea required value={description} onChange={e => setDescription(e.target.value)} rows="6" placeholder="Describe the idea, process, or outcome..." className="admin-input resize-none" /></Field>
+        <div className="grid gap-5 sm:grid-cols-2"><Field label="Category"><select value={category} onChange={e => setCategory(e.target.value)} className="admin-input"><option>Web Development</option><option>Design/Editing</option><option>Fotografi</option><option>Game Development</option></select></Field>{category === 'Web Development' && <Field label="Live URL"><input type="url" value={projectUrl} onChange={e => setProjectUrl(e.target.value)} placeholder="https://..." className="admin-input" /></Field>}</div>
+        <Field label={category === 'Web Development' ? 'Tech stack' : 'Tools used'}><input required value={tagValue} onChange={e => setTagValue(e.target.value)} placeholder="Separate items with commas..." className="admin-input" /></Field>
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="text-xs text-slate-500">LICENSE WATERMARK</p><p className="mt-2 text-sm text-slate-400">© 2026 Hak Cipta @Kanzaki.Ryuu</p></div>
+      </Panel>
+      <Panel className="p-6"><div className="mb-4"><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Project cover</p><h4 className="mt-1 font-bold text-white">Visual preview</h4></div><div className="mb-4 flex rounded-xl bg-white/5 p-1"><button type="button" onClick={() => setUploadMode('upload')} className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${uploadMode === 'upload' ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'}`}>Upload file</button><button type="button" onClick={() => setUploadMode('link')} className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${uploadMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'}`}>Image URL</button></div>{uploadMode === 'link' ? <div className="space-y-4"><input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://image-address..." className="admin-input" />{imageUrl && <img src={getProcessedImageUrl(imageUrl)} alt="Preview" className="h-56 w-full rounded-2xl object-cover" />}</div> : <><div onDragOver={e => { e.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={e => { e.preventDefault(); setIsDragging(false); processFile(e.dataTransfer.files?.[0]); }} onClick={() => fileInputRef.current?.click()} className={`flex h-56 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition ${isDragging ? 'border-cyan-300 bg-cyan-300/10' : 'border-white/10 bg-white/[0.03] hover:border-cyan-300/40'}`}>{imagePreview ? <img src={imagePreview} alt="Upload preview" className="h-full w-full object-cover" /> : <><span className="text-3xl text-cyan-300">↑</span><p className="mt-3 text-sm text-slate-300">Drop an image here</p><p className="mt-1 text-xs text-slate-500">or browse from your device</p></>}</div><input ref={fileInputRef} type="file" accept="image/*" onChange={e => processFile(e.target.files?.[0])} className="hidden" /></>}<button disabled={isSubmitting} type="submit" className="mt-6 w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 py-3.5 font-bold text-slate-950 transition hover:brightness-110 disabled:opacity-50">{isSubmitting ? 'Publishing...' : editingId ? 'Update project' : 'Publish project'}</button></Panel>
+    </form>
+  </motion.div>;
+};
+
+const Field = ({ label, children }) => <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{label}</span>{children}</label>;
+
+const ProjectLibrary = ({ projects, loading, isDuplicating, onEdit, onDelete, onDuplicate, onAdd, onExport }) => {
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All categories');
+  const [sortOrder, setSortOrder] = useState('newest');
+
+  const visibleProjects = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    return [...projects]
+      .filter(project => categoryFilter === 'All categories' || project.category === categoryFilter)
+      .filter(project => {
+        if (!normalizedSearch) return true;
+        const tags = (project.technologies || project.softwareUsed || []).join(' ');
+        return `${project.title || ''} ${project.description || ''} ${tags}`.toLowerCase().includes(normalizedSearch);
+      })
+      .sort((a, b) => {
+        if (sortOrder === 'alphabetical') return (a.title || '').localeCompare(b.title || '');
+        const getTime = project => project.createdAt?.toMillis?.() || 0;
+        return sortOrder === 'oldest' ? getTime(a) - getTime(b) : getTime(b) - getTime(a);
+      });
+  }, [projects, search, categoryFilter, sortOrder]);
+
+  return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }}>
+    <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm text-slate-400">All published work</p><h3 className="mt-1 text-3xl font-black text-white">Project library</h3></div><div className="flex flex-wrap gap-2"><button onClick={onExport} disabled={!projects.length} className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 px-4 py-2.5 text-sm font-bold text-cyan-200 transition hover:bg-cyan-300/20 disabled:cursor-not-allowed disabled:opacity-40">Export JSON</button><button onClick={onAdd} className="rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-bold text-slate-950">+ New project</button></div></div>
+    <Panel className="mb-4 p-4"><div className="grid gap-3 md:grid-cols-[1fr_0.65fr_0.55fr]"><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search title, description, or tools..." className="admin-input" /><select value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)} className="admin-input"><option>All categories</option>{categories.map(item => <option key={item.name}>{item.name}</option>)}</select><select value={sortOrder} onChange={event => setSortOrder(event.target.value)} className="admin-input"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="alphabetical">A-Z</option></select></div><p className="mt-3 text-xs text-slate-500">Showing {visibleProjects.length} of {projects.length} projects</p></Panel>
+    <Panel className="overflow-hidden">{loading ? <LoadingLine /> : visibleProjects.length === 0 ? <EmptyState text={projects.length ? 'No projects match your filters.' : 'No projects found.'} /> : <div className="divide-y divide-white/10">{visibleProjects.map(project => <div key={project.id} className="flex flex-col gap-4 p-4 transition hover:bg-white/[0.03] sm:flex-row sm:items-center sm:p-5"><div className="h-16 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-800">{project.imageUrl ? <img src={project.imageUrl} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center text-xs text-slate-600">No image</span>}</div><div className="min-w-0 flex-1"><h4 className="truncate font-bold text-white">{project.title}</h4><div className="mt-2 flex flex-wrap items-center gap-2"><span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2.5 py-1 text-[11px] text-cyan-200">{project.category}</span><span className="truncate text-xs text-slate-500">{(project.technologies || project.softwareUsed || []).join(' · ')}</span><span className="text-xs text-slate-500">Posted {formatProjectDate(project.createdAt)}</span></div></div><div className="flex flex-wrap gap-2 sm:justify-end"><button onClick={() => onEdit(project)} className="rounded-lg border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-200 hover:bg-cyan-300/20">Edit</button><button onClick={() => onDuplicate(project)} disabled={isDuplicating} className="rounded-lg border border-violet-300/20 bg-violet-300/10 px-3 py-2 text-xs font-semibold text-violet-200 hover:bg-violet-300/20 disabled:opacity-50">Duplicate</button><button onClick={() => onDelete(project.id)} className="rounded-lg border border-rose-300/20 bg-rose-300/10 px-3 py-2 text-xs font-semibold text-rose-300 hover:bg-rose-300/20">Delete</button></div></div>)}</div>}</Panel>
+  </motion.div>;
 };
 
 export default Dashboard;
