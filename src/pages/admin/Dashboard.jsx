@@ -225,16 +225,16 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#07101c] font-sans text-slate-100 selection:bg-cyan-300 selection:text-slate-950">
       <div className="pointer-events-none fixed inset-0 overflow-hidden"><div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-cyan-400/10 blur-[120px]" /><div className="absolute -bottom-48 right-0 h-[32rem] w-[32rem] rounded-full bg-violet-500/10 blur-[140px]" /></div>
-      <button type="button" onClick={() => setIsSidebarOpen(true)} className="fixed left-4 top-4 z-40 rounded-xl border border-white/10 bg-[#0c1828]/90 px-3 py-2 text-sm text-slate-200 shadow-xl backdrop-blur md:hidden">☰ Menu</button>
+      <button type="button" onClick={() => setIsSidebarOpen(true)} aria-label="Open navigation" className="fixed left-4 top-4 z-40 rounded-xl border border-white/10 bg-[#0c1828]/90 px-3 py-2 text-lg leading-none text-slate-200 shadow-xl backdrop-blur md:hidden">☰</button>
       <AnimatePresence>
         {isSidebarOpen && <><motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-sm" aria-label="Close menu" /><motion.aside initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }} className="fixed inset-y-0 left-0 z-50 flex w-[82vw] max-w-[300px] flex-col bg-[#0b1727] shadow-2xl md:hidden"><div className="flex justify-end p-3"><button onClick={() => setIsSidebarOpen(false)} className="rounded-lg px-3 py-1 text-slate-400 hover:text-white">✕</button></div>{sidebar}</motion.aside></>}
       </AnimatePresence>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-white/10 bg-[#0b1727]/95 md:flex">{sidebar}</aside>
 
       <main className="relative min-h-screen md:ml-64">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-[#07101c]/85 px-5 py-4 backdrop-blur-xl sm:px-8">
-          <div className="pl-14 md:pl-0"><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Nexus Admin / <span className="text-cyan-300">{activeTab}</span></p><h2 className="mt-1 text-lg font-bold text-white sm:text-xl">{activeTab === 'overview' ? 'Good to see you, Ryuu.' : activeTab === 'add' ? (editingId ? 'Edit project' : 'Create something new') : 'Project library'}</h2></div>
-          <div className="flex items-center gap-3"><span className="hidden items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Firebase live</span><div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-violet-400 text-sm font-bold text-slate-950">R</div></div>
+        <header className="sticky top-0 z-20 flex min-h-[73px] items-center justify-between border-b border-white/10 bg-[#07101c]/85 px-5 py-4 pl-24 backdrop-blur-xl sm:px-8 sm:pl-8">
+          <div className="min-w-0"><p className="truncate text-xs uppercase tracking-[0.2em] text-slate-500">Nexus Admin / <span className="text-cyan-300">{activeTab}</span></p><h2 className="mt-1 truncate text-lg font-bold text-white sm:text-xl">{activeTab === 'overview' ? 'Good to see you, Ryuu.' : activeTab === 'add' ? (editingId ? 'Edit project' : 'Create something new') : 'Project library'}</h2></div>
+          <div className="ml-3 flex shrink-0 items-center gap-3"><span className="hidden items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Firebase live</span><div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-violet-400 text-sm font-bold text-slate-950">R</div></div>
         </header>
 
         <div className="mx-auto max-w-7xl px-5 pb-12 pt-7 sm:px-8">
