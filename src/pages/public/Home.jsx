@@ -145,7 +145,7 @@ const Topbar = () => {
         <a href="#top" className="text-lg font-bold tracking-tight text-white">
           Ryuu<span className="text-cyan-300">Portofolio.</span>
         </a>
-        <div className="fixed right-5 top-3 z-[220] flex items-center gap-2">
+        <div className="relative z-[220] -mr-2 flex shrink-0 items-center gap-2 sm:-mr-3">
           <button
             onClick={toggleTheme}
             className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
