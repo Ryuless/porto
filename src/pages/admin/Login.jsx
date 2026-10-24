@@ -49,15 +49,20 @@ const Login = () => {
 
   const clearFeedback = () => setNotice(null);
 
-  const getCaptchaToken = async () => {
-    if (!captchaReady || !window.grecaptcha) throw new Error('CAPTCHA belum siap. Tunggu sebentar lalu coba lagi.');
-    return new Promise((resolve, reject) => {
+  const verifyCaptchaBestEffort = async () => {
+    if (!captchaReady || !window.grecaptcha) return;
+
+    const captchaRequest = new Promise(resolve => {
       window.grecaptcha.ready(() => {
         window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'admin_login' })
           .then(resolve)
-          .catch(() => reject(new Error('Verifikasi CAPTCHA gagal.')));
+          .catch(() => resolve(null));
       });
     });
+    const timeout = new Promise(resolve => {
+      window.setTimeout(() => resolve(null), 5000);
+    });
+    await Promise.race([captchaRequest, timeout]);
   };
 
   const getLoginState = () => {
@@ -90,7 +95,7 @@ const Login = () => {
     if (honeypot) return;
     setLoading(true);
     try {
-      await getCaptchaToken();
+      await verifyCaptchaBestEffort();
       await login(email.trim(), password);
       clearLoginState();
       navigate('/admin/dashboard');
@@ -164,8 +169,8 @@ const Login = () => {
                 <form onSubmit={handleLogin} className="space-y-5">
                   <input type="text" tabIndex="-1" autoComplete="off" value={honeypot} onChange={event => setHoneypot(event.target.value)} aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 opacity-0" />
                   <Field label="Email admin" type="email" value={email} onChange={setEmail} placeholder="you@example.com" />
-                  <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-sm font-semibold text-slate-300">Password</label><button type="button" onClick={() => { clearFeedback(); setMode('reset'); }} className="text-xs font-semibold text-cyan-300 transition hover:text-cyan-200">Lupa password?</button></div><input id="password" type="password" value={password} onChange={event => setPassword(event.target.value)} required placeholder="Masukkan password" className="auth-input" /></div>
-                  <button disabled={loading || !captchaReady} type="submit" className="auth-primary">{loading ? 'Memverifikasi...' : !captchaReady ? 'Menyiapkan keamanan...' : 'Masuk ke dashboard'} <span aria-hidden="true">→</span></button>
+                  <div><div className="mb-2 flex items-center justify-between"><label htmlFor="password" className="text-sm font-semibold text-slate-300">Password</label><button type="button" onClick={() => { clearFeedback(); setMode('reset'); }} className="text-xs font-semibold text-cyan-300 transition hover:text-cyan-200">Lupa password?</button></div><input id="password" type="password" value={password} onChange={event => setPassword(event.target.value)} required placeholder="Masukkan password" className="w-full rounded-[0.9rem] border border-slate-600/60 bg-slate-950/60 px-4 py-3.5 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-300/10" /></div>
+                  <button disabled={loading} type="submit" className="flex w-full items-center justify-between rounded-[0.9rem] bg-cyan-300 px-4 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-500/15 transition hover:-translate-y-0.5 hover:bg-cyan-200 disabled:cursor-wait disabled:opacity-55">{loading ? 'Memverifikasi...' : 'Masuk ke dashboard'} <span aria-hidden="true">→</span></button>
                 </form>
                 <button type="button" onClick={() => { clearFeedback(); setMode('email-help'); }} className="mt-8 text-sm text-slate-500 transition hover:text-slate-300">Tidak ingat email akun?</button>
               </>
@@ -175,7 +180,7 @@ const Login = () => {
               <>
                 <div className="mb-9"><button type="button" onClick={showLogin} className="mb-7 text-sm text-slate-400 transition hover:text-white">← Kembali ke login</button><p className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-300">Account recovery</p><h2 className="mt-3 text-3xl font-black tracking-tight text-white">Reset password.</h2><p className="mt-3 text-sm leading-6 text-slate-400">Masukkan email akun admin. Kami akan mengirim tautan untuk membuat password baru.</p></div>
                 {notice && <Feedback {...notice} />}
-                <form onSubmit={handleResetPassword} className="space-y-5"><Field label="Email akun admin" type="email" value={email} onChange={setEmail} placeholder="you@example.com" /><button disabled={loading} type="submit" className="auth-primary">{loading ? 'Mengirim tautan...' : 'Kirim reset link'} <span aria-hidden="true">↗</span></button></form>
+                <form onSubmit={handleResetPassword} className="space-y-5"><Field label="Email akun admin" type="email" value={email} onChange={setEmail} placeholder="you@example.com" /><button disabled={loading} type="submit" className="flex w-full items-center justify-between rounded-[0.9rem] bg-cyan-300 px-4 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-500/15 transition hover:-translate-y-0.5 hover:bg-cyan-200 disabled:cursor-wait disabled:opacity-55">{loading ? 'Mengirim tautan...' : 'Kirim reset link'} <span aria-hidden="true">↗</span></button></form>
               </>
             )}
 
@@ -183,7 +188,7 @@ const Login = () => {
               <>
                 <div className="mb-9"><button type="button" onClick={showLogin} className="mb-7 text-sm text-slate-400 transition hover:text-white">← Kembali ke login</button><p className="text-sm font-semibold uppercase tracking-[0.22em] text-cyan-300">Need a hand?</p><h2 className="mt-3 text-3xl font-black tracking-tight text-white">Lupa email akun?</h2><p className="mt-4 text-sm leading-7 text-slate-400">Demi keamanan, Firebase tidak menampilkan atau mencari email akun dari halaman publik.</p></div>
                 <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-sm leading-6 text-slate-300"><p className="font-semibold text-white">Coba cek:</p><p>• Password manager atau browser autofill.</p><p>• Inbox dengan kata kunci “Firebase” atau “Nexus Admin”.</p><p>• Email yang digunakan saat membuat akun admin.</p></div>
-                <button type="button" onClick={showLogin} className="auth-secondary mt-6">Kembali ke login</button>
+                <button type="button" onClick={showLogin} className="mt-6 flex w-full justify-center rounded-[0.9rem] border border-slate-600/60 px-4 py-3.5 text-sm font-bold text-slate-300 transition hover:border-cyan-300/60 hover:text-cyan-100">Kembali ke login</button>
               </>
             )}
           </section>
@@ -194,7 +199,7 @@ const Login = () => {
 };
 
 const Field = ({ label, type, value, onChange, placeholder }) => (
-  <div><label htmlFor={label} className="mb-2 block text-sm font-semibold text-slate-300">{label}</label><input id={label} type={type} value={value} onChange={event => onChange(event.target.value)} required className="auth-input" placeholder={placeholder} /></div>
+  <div><label htmlFor={label} className="mb-2 block text-sm font-semibold text-slate-300">{label}</label><input id={label} type={type} value={value} onChange={event => onChange(event.target.value)} required className="w-full rounded-[0.9rem] border border-slate-600/60 bg-slate-950/60 px-4 py-3.5 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-300/10" placeholder={placeholder} /></div>
 );
 
 const Feedback = ({ type, text }) => <div role={type === 'error' ? 'alert' : 'status'} className={`mb-5 rounded-2xl border px-4 py-3 text-sm leading-6 ${type === 'error' ? 'border-rose-400/25 bg-rose-400/10 text-rose-200' : 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200'}`}>{text}</div>;
