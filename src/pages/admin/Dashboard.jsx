@@ -32,29 +32,6 @@ const formatProjectDate = timestamp => {
   }).format(date);
 };
 
-const categories = [
-  { name: 'Web Development', short: 'Web', color: 'cyan', icon: '⌁' },
-  { name: 'Design/Editing', short: 'Design', color: 'violet', icon: '✦' },
-  { name: 'Fotografi', short: 'Photo', color: 'amber', icon: '◉' },
-  { name: 'Game Development', short: 'Game', color: 'emerald', icon: '◆' },
-];
-
-const withTimeout = (promise, ms, message) => Promise.race([
-  promise,
-  new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
-]);
-
-const formatProjectDate = timestamp => {
-  if (!timestamp) return 'Tanggal belum tersedia';
-  const date = timestamp.toDate?.() || (timestamp instanceof Date ? timestamp : new Date(timestamp));
-  if (Number.isNaN(date.getTime())) return 'Tanggal belum tersedia';
-  return new Intl.DateTimeFormat('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
-};
-
 const Dashboard = () => {
   const { logout } = useAuth();
   const { projects, loading } = usePortfolioData();
