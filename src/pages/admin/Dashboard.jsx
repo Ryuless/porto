@@ -208,16 +208,16 @@ const Dashboard = () => {
         <div><p className="text-[10px] uppercase tracking-[0.25em] text-cyan-300">Workspace</p><h1 className="font-bold text-white">Nexus<span className="text-cyan-300">Admin</span></h1></div>
       </div>
       <div className="px-4 py-6">
-        <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Manage portfolio</p>
+        <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Kelola portfolio</p>
         <div className="space-y-1.5">
           <NavButton active={activeTab === 'overview'} onClick={() => changeTab('overview')} icon="▦">Overview</NavButton>
-          <NavButton active={activeTab === 'add' && !editingId} onClick={() => changeTab('add', true)} icon="+">New project</NavButton>
-          <NavButton active={activeTab === 'list'} onClick={() => changeTab('list')} icon="☷">Project library</NavButton>
+          <NavButton active={activeTab === 'add' && !editingId} onClick={() => changeTab('add', true)} icon="+">Project baru</NavButton>
+          <NavButton active={activeTab === 'list'} onClick={() => changeTab('list')} icon="☷">Koleksi project</NavButton>
         </div>
       </div>
       <div className="mt-auto space-y-2 border-t border-white/10 p-4">
-        <Link to="/" onClick={() => setIsSidebarOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white"><span>↗</span> View live site</Link>
-        <button onClick={() => { setIsSidebarOpen(false); logout(); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-rose-300 transition hover:bg-rose-400/10"><span>↪</span> Sign out</button>
+        <Link to="/" onClick={() => setIsSidebarOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-slate-400 transition hover:bg-white/5 hover:text-white"><span>↗</span> Lihat live site</Link>
+        <button onClick={() => { setIsSidebarOpen(false); logout(); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-rose-300 transition hover:bg-rose-400/10"><span>↪</span> Keluar</button>
       </div>
     </>
   );
@@ -233,7 +233,7 @@ const Dashboard = () => {
 
       <main className="relative min-h-screen md:ml-64">
         <header className="sticky top-0 z-20 flex min-h-[73px] items-center justify-between border-b border-white/10 bg-[#07101c]/85 px-5 py-4 pl-24 backdrop-blur-xl sm:px-8 sm:pl-8">
-          <div className="min-w-0"><p className="truncate text-xs uppercase tracking-[0.2em] text-slate-500">Nexus Admin / <span className="text-cyan-300">{activeTab}</span></p><h2 className="mt-1 truncate text-lg font-bold text-white sm:text-xl">{activeTab === 'overview' ? 'Good to see you, Ryuu.' : activeTab === 'add' ? (editingId ? 'Edit project' : 'Create something new') : 'Project library'}</h2></div>
+          <div className="min-w-0"><p className="truncate text-xs uppercase tracking-[0.2em] text-slate-500">Nexus Admin / <span className="text-cyan-300">{activeTab}</span></p><h2 className="mt-1 truncate text-lg font-bold text-white sm:text-xl">{activeTab === 'overview' ? 'Good to see you, Ryuu.' : activeTab === 'add' ? (editingId ? 'Edit project' : 'Bikin sesuatu yang baru') : 'Koleksi project'}</h2></div>
           <div className="ml-3 flex shrink-0 items-center gap-3"><span className="hidden items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Firebase live</span><div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-violet-400 text-sm font-bold text-slate-950">R</div></div>
         </header>
 
@@ -255,11 +255,11 @@ const Panel = ({ children, className = '' }) => <div className={`rounded-3xl bor
 
 const Overview = ({ projects, loading, totalProjects, categoryCount, onAdd, onList }) => (
   <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} className="space-y-6">
-    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm text-slate-400">Your portfolio at a glance</p><h3 className="mt-1 text-3xl font-black tracking-tight text-white">Command center</h3></div><button onClick={onAdd} className="rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">+ Add project</button></div>
+    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm text-slate-400">Portfolio kamu, sekilas</p><h3 className="mt-1 text-3xl font-black tracking-tight text-white">Command center</h3></div><button onClick={onAdd} className="rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">+ Tambah project</button></div>
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatCard label="Total projects" value={totalProjects} meta="Published records" icon="◈" accent="cyan" />
+      <StatCard label="Total project" value={totalProjects} meta="Yang sudah dipublish" icon="◈" accent="cyan" />
       <StatCard label="Web development" value={categoryCount('Web Development')} meta="Live experiences" icon="⌁" accent="violet" />
-      <StatCard label="Creative work" value={categoryCount('Design/Editing') + categoryCount('Fotografi')} meta="Visual projects" icon="✦" accent="amber" />
+      <StatCard label="Creative work" value={categoryCount('Design/Editing') + categoryCount('Fotografi')} meta="Project visual" icon="✦" accent="amber" />
       <StatCard label="Game development" value={categoryCount('Game Development')} meta="Interactive worlds" icon="◆" accent="emerald" />
     </div>
     <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
@@ -302,13 +302,13 @@ const ProjectForm = props => {
   const tagValue = category === 'Web Development' ? techStack : softwareUsed;
   const setTagValue = category === 'Web Development' ? setTechStack : setSoftwareUsed;
   return <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} className="mx-auto max-w-5xl">
-    <div className="mb-6 flex items-end justify-between gap-4"><div><p className="text-sm text-slate-400">Portfolio library / editor</p><h3 className="mt-1 text-3xl font-black text-white">{editingId ? 'Edit project' : 'New project'}</h3></div>{editingId && <button onClick={clearForm} className="text-sm text-slate-400 hover:text-white">Cancel edit</button>}</div>
+    <div className="mb-6 flex items-end justify-between gap-4"><div><p className="text-sm text-slate-400">Portfolio library / editor</p><h3 className="mt-1 text-3xl font-black text-white">{editingId ? 'Edit project' : 'Project baru'}</h3></div>{editingId && <button onClick={clearForm} className="text-sm text-slate-400 hover:text-white">Batal edit</button>}</div>
     <form onSubmit={handleAddProject} className="grid gap-6 xl:grid-cols-[1fr_0.75fr]">
       <Panel className="space-y-5 p-6">
-        <Field label="Project title"><input required value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Nexus Dashboard v2" className="admin-input" /></Field>
-        <Field label="Description"><textarea required value={description} onChange={e => setDescription(e.target.value)} rows="6" placeholder="Describe the idea, process, or outcome..." className="admin-input resize-none" /></Field>
+        <Field label="Judul project"><input required value={title} onChange={e => setTitle(e.target.value)} placeholder="contoh: Nexus Dashboard v2" className="admin-input" /></Field>
+        <Field label="Deskripsi"><textarea required value={description} onChange={e => setDescription(e.target.value)} rows="6" placeholder="Ceritakan ide, proses, atau hasilnya..." className="admin-input resize-none" /></Field>
         <div className="grid gap-5 sm:grid-cols-2"><Field label="Category"><select value={category} onChange={e => setCategory(e.target.value)} className="admin-input"><option>Web Development</option><option>Design/Editing</option><option>Fotografi</option><option>Game Development</option></select></Field>{category === 'Web Development' && <Field label="Live URL"><input type="url" value={projectUrl} onChange={e => setProjectUrl(e.target.value)} placeholder="https://..." className="admin-input" /></Field>}</div>
-        <Field label={category === 'Web Development' ? 'Tech stack' : 'Tools used'}><input required value={tagValue} onChange={e => setTagValue(e.target.value)} placeholder="Separate items with commas..." className="admin-input" /></Field>
+        <Field label={category === 'Web Development' ? 'Tech stack' : 'Tools yang dipakai'}><input required value={tagValue} onChange={e => setTagValue(e.target.value)} placeholder="Pisahkan dengan koma..." className="admin-input" /></Field>
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"><p className="text-xs text-slate-500">LICENSE WATERMARK</p><p className="mt-2 text-sm text-slate-400">© 2026 Hak Cipta @Kanzaki.Ryuu</p></div>
       </Panel>
       <Panel className="p-6"><div className="mb-4"><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Project cover</p><h4 className="mt-1 font-bold text-white">Visual preview</h4></div><div className="mb-4 flex rounded-xl bg-white/5 p-1"><button type="button" onClick={() => setUploadMode('upload')} className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${uploadMode === 'upload' ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'}`}>Upload file</button><button type="button" onClick={() => setUploadMode('link')} className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold ${uploadMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-slate-400'}`}>Image URL</button></div>{uploadMode === 'link' ? <div className="space-y-4"><input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://image-address..." className="admin-input" />{imageUrl && <img src={getProcessedImageUrl(imageUrl)} alt="Preview" className="h-56 w-full rounded-2xl object-cover" />}</div> : <><div onDragOver={e => { e.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={e => { e.preventDefault(); setIsDragging(false); processFile(e.dataTransfer.files?.[0]); }} onClick={() => fileInputRef.current?.click()} className={`flex h-56 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed transition ${isDragging ? 'border-cyan-300 bg-cyan-300/10' : 'border-white/10 bg-white/[0.03] hover:border-cyan-300/40'}`}>{imagePreview ? <img src={imagePreview} alt="Upload preview" className="h-full w-full object-cover" /> : <><span className="text-3xl text-cyan-300">↑</span><p className="mt-3 text-sm text-slate-300">Drop an image here</p><p className="mt-1 text-xs text-slate-500">or browse from your device</p></>}</div><input ref={fileInputRef} type="file" accept="image/*" onChange={e => processFile(e.target.files?.[0])} className="hidden" /></>}<button disabled={isSubmitting} type="submit" className="mt-6 w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 py-3.5 font-bold text-slate-950 transition hover:brightness-110 disabled:opacity-50">{isSubmitting ? 'Publishing...' : editingId ? 'Update project' : 'Publish project'}</button></Panel>

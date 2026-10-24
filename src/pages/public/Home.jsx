@@ -12,9 +12,9 @@ const reveal = {
 };
 
 const formatProjectDate = timestamp => {
-  if (!timestamp) return 'Date unavailable';
+  if (!timestamp) return 'Tanggal belum tersedia';
   const date = timestamp.toDate?.() || (timestamp instanceof Date ? timestamp : new Date(timestamp));
-  if (Number.isNaN(date.getTime())) return 'Date unavailable';
+  if (Number.isNaN(date.getTime())) return 'Tanggal belum tersedia';
   return new Intl.DateTimeFormat('en-US', {
     day: 'numeric',
     month: 'short',
@@ -143,12 +143,6 @@ const Topbar = () => {
         <a href="#top" className="text-lg font-bold tracking-tight text-white">
           Ryuu<span className="text-cyan-300">Portofolio.</span>
         </a>
-        <div className="hidden items-center gap-7 text-sm text-slate-300 md:flex">
-          <a href="#profile" className="transition-colors hover:text-cyan-300">About</a>
-          <a href="#projects" className="transition-colors hover:text-cyan-300">Work</a>
-          <a href="#tools" className="transition-colors hover:text-cyan-300">Tools</a>
-          <a href="#social" className="transition-colors hover:text-cyan-300">Connect</a>
-        </div>
         <button
           onClick={toggleTheme}
           className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-300/60 hover:text-cyan-200"
@@ -168,27 +162,27 @@ const HeroSection = () => (
       <motion.div initial="hidden" animate="visible" variants={reveal}>
         <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
           <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
-          Available for Sleepy
+          Usually awake, sometimes sleepy
         </p>
         <h1 className="max-w-3xl text-5xl font-black leading-[1.05] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
-          Beginner <span className="text-cyan-300">Programmer.</span>
+          Still learning, <span className="text-cyan-300">still building.</span>
         </h1>
         <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300/80">
-          I&apos;m Ryuu, a full-stack developer, designer, and game-developer. I hate coding,
-          but i want make something.
+          I&apos;m Ryuu — a beginner developer who enjoys mixing code, design, and a little bit of game stuff.
+          I don&apos;t always love coding, but I do love turning random ideas into something real.
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
           <a href="#projects" className="rounded-full bg-cyan-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200">
-            Explore my world <span aria-hidden="true">↓</span>
+            Take a look around <span aria-hidden="true">↓</span>
           </a>
           <a href="#contact" className="rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-300/60 hover:text-cyan-200">
-            Let&apos;s talk
+            Say hi
           </a>
         </div>
         <div className="mt-12 flex gap-8 border-t border-white/10 pt-5 text-sm text-slate-400">
-          <span><strong className="mr-1 text-xl text-white">01</strong> Hate coding</span>
-          <span><strong className="mr-1 text-xl text-white">02</strong> Love yue</span>
-          <span><strong className="mr-1 text-xl text-white">03</strong> Love coffee</span>
+          <span><strong className="mr-1 text-xl text-white">01</strong> Coding, reluctantly</span>
+          <span><strong className="mr-1 text-xl text-white">02</strong> Yue enthusiast</span>
+          <span><strong className="mr-1 text-xl text-white">03</strong> Powered by coffee</span>
         </div>
       </motion.div>
 
@@ -210,15 +204,15 @@ const SkillsSection = () => {
   return (
     <section id="about" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
       <SectionHeading
-        eyebrow="A little context"
-        title="I like building things that make sense."
-        description="My portfolio grows with every experiment. Here is a live look at the kinds of work I have been exploring."
+        eyebrow="Sedikit cerita"
+        title="I like making things that feel right."
+        description="Portofolio ini tumbuh dari berbagai eksperimen kecil — some worked, some didn&apos;t, and that&apos;s okay."
       />
       <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
         <motion.div variants={reveal} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="rounded-3xl border border-white/10 bg-white/[0.045] p-7">
           <p className="text-sm leading-7 text-slate-300/80">
-            From a blank mind to a working experience, I care about the details in between:
-            clear structure, expressive visuals, and an experience that feels natural to use.
+            Dari ide yang masih berantakan sampai jadi sesuatu yang bisa dipakai, I care about the little details:
+            struktur yang jelas, visual yang punya karakter, dan experience yang terasa nyaman.
           </p>
           <div className="mt-8 flex items-center gap-8 border-t border-white/10 pt-6">
             <div><p className="text-3xl font-bold text-cyan-300">{projects.length}</p><p className="mt-1 text-xs uppercase tracking-wider text-slate-500">Projects</p></div>
@@ -272,9 +266,9 @@ const AboutSection = () => (
       </motion.div>
       <div>
         <SectionHeading
-          eyebrow="Beyond the screen"
-          title="A person behind the pixels."
-          description="I enjoy the balance between structure and expression: solving a real problem, then giving it a voice through thoughtful design."
+          eyebrow="Di balik layar"
+          title="There&apos;s a person behind the pixels."
+          description="Aku suka mencari balance antara struktur dan ekspresi: solving a real problem, lalu membuatnya terasa lebih personal lewat design."
         />
         <motion.div
           variants={reveal}
@@ -284,9 +278,9 @@ const AboutSection = () => (
           className="grid gap-4 sm:grid-cols-3"
         >
           {[
-            ['01', 'Curiosity', 'Always learning something new.'],
-            ['02', 'Craft', 'Careful with the details that matter.'],
-            ['03', 'Clarity', 'Making complex things easier to use.'],
+            ['01', 'Curiosity', 'Selalu ada hal baru untuk dipelajari.'],
+            ['02', 'Craft', 'Detail kecil tetap worth caring about.'],
+            ['03', 'Clarity', 'Making complicated things easier to understand.'],
           ].map(([number, title, text]) => (
             <div key={number} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
               <span className="font-mono text-xs text-cyan-300">{number}</span>
@@ -313,9 +307,9 @@ const SoftwareSection = () => {
   return (
     <section id="tools" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
       <SectionHeading
-        eyebrow="My toolkit"
-        title="The tools I use to bring ideas to life."
-        description="A practical mix of development, design, and creative tools that helps me move from a rough thought to a finished experience."
+        eyebrow="Tools yang dipakai"
+        title="A few tools behind the work."
+        description="Campuran tools untuk coding, design, dan creative experiments — cukup untuk mengubah ide random jadi sesuatu yang bisa dilihat."
       />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {software.map((tool, index) => (
@@ -360,12 +354,12 @@ const ExperienceCarousel = () => {
   return (
     <section id="experience" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
       <SectionHeading
-        eyebrow="In the process"
-        title="Snapshots from the journey."
-        description="A small carousel of project moments. The selection updates automatically as new image-backed projects are added."
+        eyebrow="Masih dalam proses"
+        title="A few snapshots along the way."
+        description="Beberapa momen dari project yang pernah dikerjakan. Carousel ini akan update otomatis saat ada project baru dengan gambar."
       />
       {loading ? (
-        <div className="animate-pulse rounded-3xl border border-white/10 bg-white/[0.045] p-12 text-center text-slate-400">Loading project snapshots...</div>
+        <div className="animate-pulse rounded-3xl border border-white/10 bg-white/[0.045] p-12 text-center text-slate-400">Sebentar, lagi mengambil project snapshots...</div>
       ) : activeProject ? (
         <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
           <motion.div
@@ -381,14 +375,14 @@ const ExperienceCarousel = () => {
               <div className="carousel-caption absolute bottom-5 left-5 right-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{activeProject.category}</p>
                 <h3 className="mt-2 text-2xl font-bold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.85)]">{activeProject.title}</h3>
-                <p className="mt-1 text-xs font-medium text-white/80">Posted {formatProjectDate(activeProject.createdAt)}</p>
+                <p className="mt-1 text-xs font-medium text-white/80">Diposting {formatProjectDate(activeProject.createdAt)}</p>
               </div>
             </div>
           </motion.div>
           <div className="flex flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.045] p-6">
             <div>
               <p className="text-sm leading-7 text-slate-300/75">
-                {activeProject.description || 'A glimpse into an experiment, project, or visual direction from the portfolio.'}
+                {activeProject.description || 'Sedikit glimpse dari experiment, project, atau visual direction yang pernah dibuat.'}
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {(activeProject.technologies || activeProject.softwareUsed || []).map(tag => (
@@ -411,7 +405,7 @@ const ExperienceCarousel = () => {
         </div>
       ) : (
         <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.03] p-12 text-center text-slate-500">
-          Add an image to a project from the admin dashboard to see it here.
+          Tambahkan gambar lewat admin dashboard supaya project-nya muncul di sini.
         </div>
       )}
     </section>
@@ -449,13 +443,13 @@ const ProjectsSection = () => {
 
   return (
     <section id="projects" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
-      <SectionHeading eyebrow="Selected work" title="A few things I have made." description="Browse the projects that have shaped my skills and my point of view." />
+      <SectionHeading eyebrow="Selected work" title="A few things I&apos;ve made." description="Lihat beberapa project yang ikut membentuk skill dan cara pandangku." />
       <div className="mb-8 flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
         {categories.map(category => <button key={category} onClick={() => setFilter(category)} className={`whitespace-nowrap rounded-full px-4 py-2 text-sm transition ${filter === category ? 'bg-cyan-300 font-semibold text-slate-950' : 'border border-white/10 bg-white/5 text-slate-300 hover:border-cyan-300/40'}`}>{category}</button>)}
       </div>
-      {loading ? <div className="animate-pulse text-slate-400">Loading projects...</div> : <motion.div layout className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{filteredProjects.slice(0, 6).map(project => <ProjectCard key={project.id} project={project} />)}</motion.div>}
-      {!loading && filteredProjects.length === 0 && <p className="py-10 text-center text-slate-500">No projects found for this category.</p>}
-      {!loading && projects.length > 6 && <div className="mt-10 text-center"><Link to="/projects" className="text-sm font-semibold text-cyan-300 transition hover:text-cyan-200">View the full archive →</Link></div>}
+      {loading ? <div className="animate-pulse text-slate-400">Lagi memuat project...</div> : <motion.div layout className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{filteredProjects.slice(0, 6).map(project => <ProjectCard key={project.id} project={project} />)}</motion.div>}
+      {!loading && filteredProjects.length === 0 && <p className="py-10 text-center text-slate-500">Belum ada project di kategori ini.</p>}
+      {!loading && projects.length > 6 && <div className="mt-10 text-center"><Link to="/projects" className="text-sm font-semibold text-cyan-300 transition hover:text-cyan-200">Lihat semua project →</Link></div>}
     </section>
   );
 };
@@ -469,7 +463,7 @@ const SocialMediaSection = () => {
 
   return (
     <section id="social" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
-      <SectionHeading eyebrow="Around the web" title="Say hello, wherever you are." description="A few places where I share work, ideas, and whatever I am learning next." />
+      <SectionHeading eyebrow="Find me online" title="Say hello, wherever you are." description="Beberapa tempat untuk share work, ide, dan hal-hal baru yang sedang dipelajari." />
       <div className="grid gap-4 sm:grid-cols-3">
         {socials.map((social, index) => (
           <motion.a key={social.name} href={social.url} target="_blank" rel="noopener noreferrer" variants={reveal} initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ delay: index * 0.1 }} className={`group rounded-3xl bg-gradient-to-br ${social.color} p-6 text-white shadow-lg transition hover:-translate-y-1`}>

@@ -14,7 +14,7 @@ import poseOneImage from './assets/pose1.png';
 
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState('Waking up the interface');
+  const [status, setStatus] = useState('Menyiapkan interface');
   const [signal, setSignal] = useState({ label: 'STANDARD', color: 'text-emerald-300', icon: '●' });
 
   useEffect(() => {
@@ -55,7 +55,7 @@ const LoadingScreen = ({ onComplete }) => {
 
       completionScheduled = true;
       setMonotonicProgress(100);
-      setStatus('Ready to explore');
+      setStatus('Siap dijelajahi');
       completionTimer = setTimeout(onComplete, completedDisplayTime);
     };
 
@@ -69,10 +69,10 @@ const LoadingScreen = ({ onComplete }) => {
       if (completedTasks.has(task)) return;
       completedTasks.add(task);
       setStatus([
-        'Waking up the interface',
-        'Collecting small ideas',
-        'Polishing the details',
-        'Ready to explore',
+        'Menyiapkan interface',
+        'Mengumpulkan ide kecil',
+        'Merapikan detail',
+        'Siap dijelajahi',
       ][completedTasks.size - 1]);
       scheduleCompletion();
     };
@@ -149,12 +149,12 @@ const LoadingScreen = ({ onComplete }) => {
           >
             ✦
           </motion.div>
-          <h1 className="mt-8 text-3xl font-black tracking-tight text-white">A small world is loading.</h1>
+          <h1 className="mt-8 text-3xl font-black tracking-tight text-white">Small world, loading...</h1>
           <p className="mt-3 text-sm text-slate-400">{status}...</p>
         </div>
         <div className="mt-10">
           <div className="mb-2 flex justify-between text-[10px] uppercase tracking-[0.2em] text-slate-500">
-            <span>Preparing experience</span>
+            <span>Menyiapkan experience</span>
             <span>{progress}%</span>
           </div>
           <div className="h-1 overflow-hidden rounded-full bg-white/10">
