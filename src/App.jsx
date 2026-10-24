@@ -11,6 +11,7 @@ import ProjectDetail from './pages/public/ProjectDetail';
 import ProjectsPage from './pages/public/ProjectsPage';
 import yueImage from './assets/yue.png';
 import poseOneImage from './assets/pose1.png';
+import { BackgroundMusicProvider } from './context/BackgroundMusicContext';
 
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
@@ -176,30 +177,32 @@ function App() {
   const finishLoading = useCallback(() => setIsLoading(false), []);
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/project/:id" element={<ProjectDetail />} />
-            <Route path="/admin/login" element={<Login />} />
-            <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-            <Route 
-              path="/admin/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
-          </Routes>
-        </Router>
-        <AnimatePresence>
-          {isLoading && <LoadingScreen onComplete={finishLoading} />}
-        </AnimatePresence>
-      </AuthProvider>
-    </ThemeProvider>
+    <BackgroundMusicProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/project/:id" element={<ProjectDetail />} />
+              <Route path="/admin/login" element={<Login />} />
+              <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+              <Route 
+                path="/admin/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </Router>
+          <AnimatePresence>
+            {isLoading && <LoadingScreen onComplete={finishLoading} />}
+          </AnimatePresence>
+        </AuthProvider>
+      </ThemeProvider>
+    </BackgroundMusicProvider>
   );
 }
 

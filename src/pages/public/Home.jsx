@@ -145,7 +145,11 @@ const Topbar = () => {
         </a>
         <button
           onClick={toggleTheme}
-          className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-300/60 hover:text-cyan-200"
+          className={`fixed right-25 top-3 z-[220] rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+            isDarkMode
+              ? 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-300/60 hover:text-cyan-200'
+              : 'border-slate-400 bg-white/90 text-slate-700 shadow-sm hover:border-slate-600 hover:text-slate-950'
+          }`}
           title="Toggle theme"
         >
           {isDarkMode ? '☀ Light' : '☾ Dark'}

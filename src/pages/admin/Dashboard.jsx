@@ -1,11 +1,13 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePortfolioData } from '../../hooks/usePortfolioData';
-import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, storage } from '../../firebase/config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { backgroundMusicFileName, defaultBackgroundMusicVolume, useBackgroundMusicSettings } from '../../hooks/useBackgroundMusicSettings';
+import { useBackgroundMusic } from '../../hooks/useBackgroundMusic';
 
 const categories = [
   { name: 'Web Development', short: 'Web', color: 'cyan', icon: '⌁' },
@@ -33,6 +35,7 @@ const formatProjectDate = timestamp => {
 const Dashboard = () => {
   const { logout } = useAuth();
   const { projects, loading } = usePortfolioData();
+  const { volume, setVolume, error: musicSettingsError } = useBackgroundMusicSettings();
   const [activeTab, setActiveTab] = useState('overview');
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState('');
@@ -49,6 +52,8 @@ const Dashboard = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [isSavingMusicSettings, setIsSavingMusicSettings] = useState(false);
+  const musicSaveTimerRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const totalProjects = projects.length;
@@ -201,6 +206,35 @@ const Dashboard = () => {
     setIsSidebarOpen(false);
   };
 
+  useEffect(() => () => clearTimeout(musicSaveTimerRef.current), []);
+
+  const saveMusicVolume = async nextVolume => {
+    try {
+      await withTimeout(
+        setDoc(doc(db, 'siteSettings', 'backgroundMusic'), {
+          fileName: backgroundMusicFileName,
+          volume: nextVolume,
+          updatedAt: serverTimestamp(),
+        }, { merge: true }),
+        10000,
+        'Pengaturan backsound tidak merespon (Timeout).',
+      );
+    } catch (saveError) {
+      console.error(saveError);
+      alert(`Gagal menyimpan volume backsound!\n\nError: ${saveError.message}`);
+    } finally {
+      setIsSavingMusicSettings(false);
+    }
+  };
+
+  const handleMusicVolumeChange = event => {
+    const nextVolume = Number(event.target.value);
+    setVolume(nextVolume);
+    clearTimeout(musicSaveTimerRef.current);
+    setIsSavingMusicSettings(true);
+    musicSaveTimerRef.current = setTimeout(() => saveMusicVolume(nextVolume), 600);
+  };
+
   const sidebar = (
     <>
       <div className="flex items-center gap-3 border-b border-white/10 px-6 py-6">
@@ -213,6 +247,7 @@ const Dashboard = () => {
           <NavButton active={activeTab === 'overview'} onClick={() => changeTab('overview')} icon="▦">Overview</NavButton>
           <NavButton active={activeTab === 'add' && !editingId} onClick={() => changeTab('add', true)} icon="+">Project baru</NavButton>
           <NavButton active={activeTab === 'list'} onClick={() => changeTab('list')} icon="☷">Koleksi project</NavButton>
+          <NavButton active={activeTab === 'music'} onClick={() => changeTab('music')} icon="♫">Backsound</NavButton>
         </div>
       </div>
       <div className="mt-auto space-y-2 border-t border-white/10 p-4">
@@ -233,15 +268,16 @@ const Dashboard = () => {
 
       <main className="relative min-h-screen md:ml-64">
         <header className="sticky top-0 z-20 flex min-h-[73px] items-center justify-between border-b border-white/10 bg-[#07101c]/85 px-5 py-4 pl-24 backdrop-blur-xl sm:px-8 sm:pl-8">
-          <div className="min-w-0"><p className="truncate text-xs uppercase tracking-[0.2em] text-slate-500">Nexus Admin / <span className="text-cyan-300">{activeTab}</span></p><h2 className="mt-1 truncate text-lg font-bold text-white sm:text-xl">{activeTab === 'overview' ? 'Good to see you, Ryuu.' : activeTab === 'add' ? (editingId ? 'Edit project' : 'Bikin sesuatu yang baru') : 'Koleksi project'}</h2></div>
+          <div className="min-w-0"><p className="truncate text-xs uppercase tracking-[0.2em] text-slate-500">Nexus Admin / <span className="text-cyan-300">{activeTab}</span></p><h2 className="mt-1 truncate text-lg font-bold text-white sm:text-xl">{activeTab === 'overview' ? 'Good to see you, Ryuu.' : activeTab === 'add' ? (editingId ? 'Edit project' : 'Bikin sesuatu yang baru') : activeTab === 'music' ? 'Atur backsound home' : 'Koleksi project'}</h2></div>
           <div className="ml-3 flex shrink-0 items-center gap-3"><span className="hidden items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" /> Firebase live</span><div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-violet-400 text-sm font-bold text-slate-950">R</div></div>
         </header>
 
         <div className="mx-auto max-w-7xl px-5 pb-12 pt-7 sm:px-8">
           <AnimatePresence mode="wait">
-            {activeTab === 'overview' && <Overview key="overview" projects={projects} loading={loading} totalProjects={totalProjects} categoryCount={categoryCount} onAdd={() => changeTab('add', true)} onList={() => changeTab('list')} />}
+            {activeTab === 'overview' && <Overview key="overview" projects={projects} loading={loading} totalProjects={totalProjects} categoryCount={categoryCount} volume={volume} fileName={backgroundMusicFileName} onAdd={() => changeTab('add', true)} onList={() => changeTab('list')} onMusic={() => changeTab('music')} />}
             {activeTab === 'add' && <ProjectForm key="add" {...{ title, setTitle, description, setDescription, category, setCategory, projectUrl, setProjectUrl, techStack, setTechStack, softwareUsed, setSoftwareUsed, uploadMode, setUploadMode, imageUrl, setImageUrl, imagePreview, isDragging, setIsDragging, processFile, fileInputRef, isSubmitting, editingId, handleAddProject, clearForm, getProcessedImageUrl }} />}
             {activeTab === 'list' && <ProjectLibrary key="list" projects={projects} loading={loading} isDuplicating={isDuplicating} onEdit={handleEdit} onDelete={handleDelete} onDuplicate={handleDuplicate} onAdd={() => changeTab('add', true)} onExport={exportProjects} />}
+            {activeTab === 'music' && <MusicSettings key="music" volume={volume} defaultVolume={defaultBackgroundMusicVolume} fileName={backgroundMusicFileName} error={musicSettingsError} isSaving={isSavingMusicSettings} onVolumeChange={handleMusicVolumeChange} />}
           </AnimatePresence>
         </div>
       </main>
@@ -249,11 +285,64 @@ const Dashboard = () => {
   );
 };
 
+const MusicSettings = ({ volume, defaultVolume, fileName, error, isSaving, onVolumeChange }) => {
+  const { isPlaying, toggleMusic } = useBackgroundMusic();
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} className="max-w-3xl space-y-6">
+      <div>
+        <p className="text-sm text-slate-400">Pengaturan audio website</p>
+        <h3 className="mt-1 text-3xl font-black tracking-tight text-white">Backsound Home</h3>
+      </div>
+      <Panel className="p-6 sm:p-8">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10 text-2xl text-cyan-300">♫</div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">File yang diputar</p>
+            <p className="mt-2 break-all font-semibold text-white">{fileName}</p>
+            <p className="mt-1 text-sm text-emerald-300">Aktif di Home page</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={toggleMusic} className="flex items-center gap-1.5 rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:border-cyan-200/70 hover:bg-cyan-300/20" aria-label={isPlaying ? 'Matikan musik latar' : 'Nyalakan musik latar'}>
+            <span aria-hidden="true">♫</span>
+            <span className={isPlaying ? '' : 'line-through'}>music</span>
+          </button>
+          <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300">Realtime</span>
+        </div>
+      </div>
+      <div className="mt-8 border-t border-white/10 pt-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold text-white">Volume backsound</p>
+            <p className="mt-1 text-sm text-slate-400">Perubahan langsung diterapkan di Home page.</p>
+          </div>
+          <span className="rounded-lg bg-cyan-300/10 px-3 py-1.5 text-sm font-bold text-cyan-200">{volume}%</span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={volume}
+          onChange={onVolumeChange}
+          aria-label="Volume backsound"
+          className="mt-6 w-full accent-cyan-300"
+        />
+        <div className="mt-2 flex justify-between text-xs text-slate-500"><span>Mute</span><span>Default {defaultVolume}%</span><span>100%</span></div>
+        {isSaving && <p className="mt-4 text-sm text-cyan-300">Menyimpan perubahan...</p>}
+        {error && <p className="mt-4 text-sm text-rose-300">Pengaturan realtime gagal dimuat: {error.message}</p>}
+      </div>
+      </Panel>
+    </motion.div>
+  );
+};
+
 const NavButton = ({ active, onClick, icon, children }) => <button onClick={onClick} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition ${active ? 'bg-cyan-300/10 text-cyan-200 shadow-[inset_3px_0_0_#67e8f9]' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}><span className={`flex h-7 w-7 items-center justify-center rounded-lg text-base ${active ? 'bg-cyan-300/15 text-cyan-300' : 'bg-white/5 text-slate-500'}`}>{icon}</span>{children}</button>;
 
 const Panel = ({ children, className = '' }) => <div className={`rounded-3xl border border-white/10 bg-[#0d1a2b]/80 shadow-2xl shadow-black/10 ${className}`}>{children}</div>;
 
-const Overview = ({ projects, loading, totalProjects, categoryCount, onAdd, onList }) => (
+const Overview = ({ projects, loading, totalProjects, categoryCount, volume, fileName, onAdd, onList, onMusic }) => (
   <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} className="space-y-6">
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><p className="text-sm text-slate-400">Portfolio kamu, sekilas</p><h3 className="mt-1 text-3xl font-black tracking-tight text-white">Command center</h3></div><button onClick={onAdd} className="rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">+ Tambah project</button></div>
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -266,6 +355,17 @@ const Overview = ({ projects, loading, totalProjects, categoryCount, onAdd, onLi
       <Panel className="p-6"><div className="mb-6 flex items-center justify-between"><div><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Live analytics</p><h3 className="mt-1 text-lg font-bold text-white">Category distribution</h3></div><span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">Realtime</span></div>{loading ? <LoadingLine /> : <div className="space-y-5">{categories.map(item => <Ratio key={item.name} {...item} count={categoryCount(item.name)} total={totalProjects} />)}</div>}</Panel>
       <Panel className="flex flex-col justify-between overflow-hidden p-6"><div><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Latest signal</p><h3 className="mt-1 text-lg font-bold text-white">Portfolio health</h3><div className="mt-8 flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10 text-2xl text-cyan-300">✓</div><div><p className="text-2xl font-black text-white">{projects.length ? 'Active' : 'Ready'}</p><p className="text-sm text-slate-400">{projects.length ? 'Your work is online' : 'Add your first project'}</p></div></div></div><button onClick={onList} className="mt-8 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 transition hover:border-cyan-300/30 hover:text-cyan-200">Open project library <span>→</span></button></Panel>
     </div>
+    <Panel className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10 text-2xl text-cyan-300">♫</div>
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Backsound Home</p>
+          <p className="mt-1 truncate font-semibold text-white">{fileName}</p>
+          <p className="mt-1 text-sm text-slate-400">Volume saat ini {volume}% · realtime</p>
+        </div>
+      </div>
+      <button onClick={onMusic} className="shrink-0 rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-4 py-2.5 text-sm font-semibold text-cyan-200 transition hover:border-cyan-200/70 hover:bg-cyan-300/20">Atur backsound <span aria-hidden="true">→</span></button>
+    </Panel>
     <Panel className="p-6"><div className="mb-5 flex items-center justify-between"><div><p className="text-xs uppercase tracking-[0.2em] text-slate-500">Recent work</p><h3 className="mt-1 text-lg font-bold text-white">Latest projects</h3></div><button onClick={onList} className="text-sm text-cyan-300 hover:text-cyan-200">View all →</button></div>{loading ? <LoadingLine /> : projects.length === 0 ? <EmptyState text="No projects yet. Start building your library." /> : <div className="grid gap-3 md:grid-cols-3">{projects.slice(0, 3).map(project => <ProjectMini key={project.id} project={project} />)}</div>}</Panel>
   </motion.div>
 );
