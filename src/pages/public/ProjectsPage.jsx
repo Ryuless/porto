@@ -18,7 +18,7 @@ const ProjectsPage = () => {
           onClick={() => navigate(-1)} 
           className="flex items-center gap-2 font-medium hover:text-cyan-400 transition-colors"
         >
-          &larr; Back to Home
+          &larr; Kembali ke home
         </button>
         <div className="font-black text-xl tracking-tighter hidden sm:block">
           ALL<span className="text-cyan-400">PROJECTS</span>
@@ -29,9 +29,9 @@ const ProjectsPage = () => {
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
-            Archived Masterpieces
+            Semua project, no filter
           </h1>
-          <p className="mt-4 opacity-70 text-lg">A complete collection of all my works and experiments.</p>
+          <p className="mt-4 opacity-70 text-lg">Kumpulan work dan eksperimen yang pernah dibuat.</p>
         </div>
 
         <div className="flex justify-center gap-4 mb-12 flex-wrap">
@@ -51,7 +51,7 @@ const ProjectsPage = () => {
         </div>
 
         {loading ? (
-          <div className="text-center animate-pulse py-20 text-xl">Loading complete archive...</div>
+          <div className="text-center animate-pulse py-20 text-xl">Lagi membuka semua project...</div>
         ) : (
           <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
             <AnimatePresence>
@@ -82,12 +82,12 @@ const ProjectsPage = () => {
                           <img src={project.imageUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-slate-500 group-hover:scale-105 transition-transform duration-500">
-                            [No Thumbnail]
+                            Belum ada thumbnail
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80" />
                         <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {isWeb ? '↗ Visit Site' : '👁️ View Details'}
+                          {isWeb ? '↗ Buka site' : '👁️ Lihat detail'}
                         </div>
                       </div>
                       <div className="p-6">
@@ -110,7 +110,7 @@ const ProjectsPage = () => {
             </AnimatePresence>
             {filteredProjects.length === 0 && (
               <div className="col-span-full py-10 text-center text-slate-500">
-                No projects found for {filter}
+                Belum ada project untuk {filter}
               </div>
             )}
           </motion.div>

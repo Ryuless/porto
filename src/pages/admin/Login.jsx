@@ -23,7 +23,7 @@ const Login = () => {
       navigate('/admin/dashboard'); 
     } catch (err) {
       console.error(err);
-      setError('Akses ditolak: Email atau Password salah.');
+      setError('Hmm, email atau password-nya belum cocok.');
     } finally {
       setLoading(false);
     }
@@ -39,9 +39,9 @@ const Login = () => {
       >
         <div className="text-center mb-8">
           <h2 className="text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-emerald-400">
-            SYSTEM ACCESS
+            Welcome back
           </h2>
-          <p className="text-sm text-slate-400 mt-2 tracking-widest">AUTHORIZED PERSONNEL ONLY</p>
+          <p className="text-sm text-slate-400 mt-2 tracking-widest">ADMIN AREA — take it easy</p>
         </div>
 
         {error && (
@@ -52,7 +52,7 @@ const Login = () => {
         
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block mb-2 text-sm font-semibold tracking-wide text-slate-300">ADMIN EMAIL</label>
+            <label className="block mb-2 text-sm font-semibold tracking-wide text-slate-300">Email admin</label>
             <input 
               type="email" 
               value={email}
@@ -63,7 +63,7 @@ const Login = () => {
             />
           </div>
           <div>
-            <label className="block mb-2 text-sm font-semibold tracking-wide text-slate-300">PASSWORD</label>
+            <label className="block mb-2 text-sm font-semibold tracking-wide text-slate-300">Password</label>
             <input 
               type="password" 
               value={password}
@@ -78,7 +78,7 @@ const Login = () => {
             type="submit" 
             className="w-full py-4 mt-8 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-widest rounded-xl shadow-lg hover:shadow-cyan-500/25 transition-all active:scale-95 disabled:opacity-50"
           >
-            {loading ? 'AUTHENTICATING...' : 'LOGIN'}
+            {loading ? 'Checking...' : 'Masuk'}
           </button>
         </form>
       </motion.div>

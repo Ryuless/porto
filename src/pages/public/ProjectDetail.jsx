@@ -33,7 +33,7 @@ const ProjectDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        <div className="animate-pulse text-xl">Loading project details...</div>
+        <div className="animate-pulse text-xl">Lagi membuka detail project...</div>
       </div>
     );
   }
@@ -41,8 +41,8 @@ const ProjectDetail = () => {
   if (!project) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white">
-        <h1 className="text-3xl font-bold mb-4">Project not found</h1>
-        <Link to="/" className="text-cyan-400 hover:underline">Return to Home</Link>
+        <h1 className="text-3xl font-bold mb-4">Project-nya nggak ketemu</h1>
+        <Link to="/" className="text-cyan-400 hover:underline">Balik ke home</Link>
       </div>
     );
   }
@@ -54,7 +54,7 @@ const ProjectDetail = () => {
           onClick={() => navigate(-1)} 
           className="flex items-center gap-2 hover:text-cyan-400 transition-colors"
         >
-          &larr; Back to Portfolio
+          &larr; Kembali ke portfolio
         </button>
       </nav>
 
@@ -100,9 +100,9 @@ const ProjectDetail = () => {
           </div>
 
           <div className="max-w-3xl mx-auto bg-slate-900 p-8 rounded-2xl border border-slate-800">
-            <h2 className="text-2xl font-bold mb-4 border-b border-slate-800 pb-4">Project Description</h2>
+            <h2 className="text-2xl font-bold mb-4 border-b border-slate-800 pb-4">Tentang project ini</h2>
             <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
-              {project.description || "No description provided for this project."}
+              {project.description || "Belum ada deskripsi untuk project ini."}
             </p>
 
             {project.watermark && (

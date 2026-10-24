@@ -1,520 +1,521 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { usePortfolioData } from '../../hooks/usePortfolioData';
 import { useTheme } from '../../context/ThemeContext';
-import { Link } from 'react-router-dom';
+import heroImage from '../../assets/yue.png';
+import poseOne from '../../assets/pose1.png';
 
-const Typewriter = ({ text, delay = 100 }) => {
-  const [currentText, setCurrentText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
+const reveal = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: 'easeOut' } },
+};
+
+const formatProjectDate = timestamp => {
+  if (!timestamp) return 'Tanggal belum tersedia';
+  const date = timestamp.toDate?.() || (timestamp instanceof Date ? timestamp : new Date(timestamp));
+  if (Number.isNaN(date.getTime())) return 'Tanggal belum tersedia';
+  return new Intl.DateTimeFormat('en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+};
+
+const SectionHeading = ({ eyebrow, title, description }) => (
+  <motion.div
+    variants={reveal}
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, amount: 0.25 }}
+    className="mb-10 max-w-2xl"
+  >
+    <p className="mb-3 text-sm font-semibold uppercase tracking-[0.24em] text-cyan-300">{eyebrow}</p>
+    <h2 className="text-3xl font-bold tracking-tight text-slate-50 sm:text-4xl">{title}</h2>
+    <p className="mt-4 text-base leading-7 text-slate-300/75">{description}</p>
+  </motion.div>
+);
+
+const ProfileShuffleCard = () => {
+  const cards = [
+    { image: heroImage, label: 'YUE / CHARACTER' },
+    { image: poseOne, label: 'RYUU / DEVELOPER' },
+    // { image: poseTwo, label: 'RYUU / EXPLORER' },
+  ];
+  const [order, setOrder] = useState(cards.map((_, index) => index));
+  const lastTapRef = useRef(0);
 
   useEffect(() => {
-    if (currentIndex < text.length) {
-      const timeout = setTimeout(() => {
-        setCurrentText(prevText => prevText + text[currentIndex]);
-        setCurrentIndex(prevIndex => prevIndex + 1);
-      }, delay);
-      return () => clearTimeout(timeout);
-    }
-  }, [currentIndex, delay, text]);
+    const timer = setInterval(() => {
+      setOrder(current => [...current.slice(1), current[0]]);
+    }, 3600);
+    return () => clearInterval(timer);
+  }, []);
 
-  return <span>{currentText}</span>;
-};
+  const handleCardTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 1200) return;
 
-const HeroSection = () => {
-  return (
-    <section className="min-h-screen flex flex-col justify-center items-center text-center px-4 pt-24 pb-10 relative overflow-hidden">
-      {/* 3D / Floating Elements Background (Abstract visual) */}
-      <motion.div 
-        animate={{ y: [0, -20, 0], rotate: [0, 5, -5, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute w-64 h-64 bg-cyan-500/20 blur-[100px] rounded-full top-20 left-10 pointer-events-none"
-      />
-      <motion.div 
-        animate={{ y: [0, 20, 0], scale: [1, 1.1, 1] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute w-80 h-80 bg-emerald-500/20 blur-[120px] rounded-full bottom-20 right-10 pointer-events-none"
-      />
-
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="z-10"
-      >
-        <h2 className="text-xl md:text-2xl font-semibold mb-4 tracking-widest uppercase opacity-80">
-          Welcome to my universe
-        </h2>
-        <h1 className="text-5xl md:text-7xl font-black mb-6 pb-2 leading-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600">
-          <Typewriter text="I'm a Full-Stack Developer & Designer." delay={60} />
-        </h1>
-        <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10 opacity-75">
-          Crafting premium digital experiences through seamless code and striking visual design.
-        </p>
-
-        <div className="flex flex-wrap gap-4 justify-center w-full max-w-4xl mx-auto">
-          <motion.button 
-            onClick={() => document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-full shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all"
-          >
-            Explore Work
-          </motion.button>
-          <motion.button 
-            onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full sm:w-auto px-8 py-3 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 font-bold rounded-full transition-all"
-          >
-            Skills Matrix
-          </motion.button>
-          <motion.button 
-            onClick={() => document.getElementById('social')?.scrollIntoView({ behavior: 'smooth' })}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full sm:w-auto px-8 py-3 border border-purple-500/50 text-purple-400 hover:bg-purple-500/10 font-bold rounded-full transition-all"
-          >
-            Social Media
-          </motion.button>
-          <motion.button 
-            onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full sm:w-auto px-8 py-3 border border-cyan-500/50 hover:bg-cyan-500/10 font-bold rounded-full transition-all"
-          >
-            Contact Me
-          </motion.button>
-        </div>
-      </motion.div>
-    </section>
-  );
-};
-
-const SkillsSection = () => {
-  const { projects, categories, loading } = usePortfolioData();
-  const totalProjects = projects.length;
-
-  return (
-    <section id="about" className="py-20 px-6 max-w-5xl mx-auto">
-      <div className="mb-16 text-center">
-        <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400 inline-block">
-          Dynamic Category Matrix
-        </h2>
-        <div className="mt-4 flex flex-col items-center justify-center space-y-2">
-          <p className="opacity-70">Realtime category distribution based on completed projects.</p>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full">
-            <span className="text-sm opacity-70">Total Portfolio Projects:</span>
-            <span className="font-mono text-lg text-cyan-400 font-bold">{totalProjects}</span>
-          </div>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="text-center animate-pulse">Computing categories...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {categories.map((category, index) => (
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              key={category.name} 
-              className="bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10"
-            >
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold text-lg">{category.name}</span>
-                  <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-white/70">
-                    {category.count} Project{category.count > 1 ? 's' : ''}
-                  </span>
-                </div>
-                <span className="font-mono text-cyan-400">{Math.round(category.progress)}%</span>
-              </div>
-              <div className="h-3 w-full bg-black/40 rounded-full overflow-hidden">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  whileInView={{ width: `${category.progress}%` }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1.5, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_10px_rgba(6,182,212,0.8)]"
-                />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-};
-
-const ProjectsSection = () => {
-  const { projects, loading } = usePortfolioData();
-  const [filter, setFilter] = useState('All');
-  const [visibleCount, setVisibleCount] = useState(3);
-
-  const categories = ['All', 'Web Development', 'Design/Editing', 'Fotografi', 'Game Development'];
-  const filteredProjects = filter === 'All' ? projects : projects.filter(p => p.category === filter);
-  const displayedProjects = filteredProjects.slice(0, visibleCount);
-
-  const handleFilterChange = (cat) => {
-    setFilter(cat);
-    setVisibleCount(3); // Reset to 3 when switching category
+    lastTapRef.current = now;
+    setOrder(current => [...current.slice(1), current[0]]);
   };
 
   return (
-    <section id="projects" className="py-20 px-6 max-w-7xl mx-auto">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
-          Featured Projects
-        </h2>
-      </div>
-
-      <div className="flex justify-start md:justify-center gap-2 md:gap-4 mb-12 overflow-x-auto md:overflow-visible pb-4 md:pb-0 px-2 md:px-0 flex-nowrap md:flex-wrap snap-x hide-scrollbar">
-        {categories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => handleFilterChange(cat)}
-            className={`whitespace-nowrap snap-center text-sm md:text-base px-5 py-2 md:px-6 md:py-2 rounded-full font-medium transition-all ${
-              filter === cat 
-                ? 'bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.5)]' 
-                : 'bg-white/5 border border-white/10 hover:bg-white/10'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="text-center animate-pulse">Loading projects...</div>
-      ) : (
-        <>
-          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <AnimatePresence>
-              {displayedProjects.map((project) => {
-              const isWeb = project.category === 'Web Development';
-              // Jika Web Dev dan punya URL, arahkan ke URL eksternalnya. Jika Design, ke halaman detail.
-              const targetUrl = isWeb ? (project.projectUrl || '#') : `/project/${project.id}`;
-
-              const CardWrapper = isWeb && project.projectUrl ? 'a' : Link;
-
-              return (
-                <CardWrapper
-                  href={isWeb && project.projectUrl ? project.projectUrl : undefined}
-                  to={!isWeb || !project.projectUrl ? targetUrl : undefined}
-                  target={isWeb && project.projectUrl ? "_blank" : undefined}
-                  rel={isWeb && project.projectUrl ? "noopener noreferrer" : undefined}
-                  key={project.id}
-                  className="group relative bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden hover:border-cyan-500/50 transition-colors block cursor-pointer"
-                >
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.3 }}
-                    className="h-full"
-                  >
-                    <div className="h-48 bg-black/30 flex items-center justify-center p-0 overflow-hidden relative">
-                      {project.imageUrl ? (
-                        <img src={project.imageUrl} alt={project.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-slate-500 group-hover:scale-105 transition-transform duration-500">
-                          [No Thumbnail]
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-80" />
-                      {/* Hint for interaction */}
-                      <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {isWeb ? '↗ Visit Site' : '👁️ View Details'}
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
-                        {project.category}
-                      </span>
-                      <h3 className="text-2xl font-bold mt-2 mb-4">{project.title}</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {(project.technologies || project.softwareUsed || []).map(tag => (
-                          <span key={tag} className="text-xs bg-white/10 px-2 py-1 rounded-md text-slate-300">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                </CardWrapper>
-              );
-            })}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* View More Button */}
-        {filteredProjects.length > visibleCount && (
-          <div className="mt-12 text-center">
-            <Link 
-              to="/projects"
-              className="inline-block px-8 py-3 bg-white/5 border border-white/20 hover:bg-white/10 hover:border-cyan-500/50 rounded-full font-bold transition-all shadow-[0_0_10px_rgba(255,255,255,0.05)] hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] text-cyan-50"
-            >
-              View More Projects &rarr;
-            </Link>
-          </div>
-        )}
-        </>
-      )}
-    </section>
-  );
-};
-
-const SocialMediaSection = () => {
-  const [popupData, setPopupData] = useState(null);
-
-  const socials = [
-    { 
-      name: 'Instagram', 
-      label: 'Instagram', 
-      accounts: [
-        { label: 'First Account', url: 'https://www.instagram.com/kanzaki.ryuu' },
-        { label: 'Second Account', url: 'https://www.instagram.com/yuu__kanzaki' }
-      ],
-      color: 'from-pink-500 to-orange-400' 
-    },
-    { name: 'TikTok', label: 'TikTok', url: '#', color: 'from-black to-slate-800' },
-    { name: 'LinkedIn', label: 'LinkedIn', url: '#', color: 'from-blue-600 to-blue-400' },
-    { name: 'Linktree', label: 'Linktree', url: 'https://linktr.ee/yuukanzaki', color: 'from-green-500 to-emerald-400' },
-    { name: 'Discord Profile', label: 'Discord', desc: 'Profile', url: 'https://discord.gg/rC42hrxV', color: 'from-indigo-500 to-purple-500' },
-    { name: 'Discord Server', label: 'Discord', desc: 'Tempat Nongkrong', url: 'https://discord.gg/95H23cEdHE', color: 'from-indigo-600 to-purple-600' }
-  ];
-
-  const CardContent = ({ social }) => (
-    <>
-      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all duration-300" />
-      <div className="relative z-10 text-white flex flex-col items-center">
-        <span className="font-bold text-xl tracking-wide">{social.name}</span>
-        {social.desc && (
-          <span className="mt-2 text-xs py-1 px-3 bg-white/20 rounded-full font-medium">
-            {social.desc}
-          </span>
-        )}
-      </div>
-    </>
-  );
-
-  return (
-    <section id="social" className="py-20 px-6 max-w-5xl mx-auto text-center relative">
-      <div className="mb-16">
-        <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 inline-block">
-          Connect With Me
-        </h2>
-        <p className="mt-4 opacity-70">Find me across the digital universe.</p>
-      </div>
-      
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-        {socials.map((social, idx) => {
-          const cardClass = `p-6 rounded-2xl flex flex-col items-center justify-center bg-gradient-to-br ${social.color} shadow-lg relative overflow-hidden group w-full cursor-pointer`;
-          
-          if (social.accounts) {
+    <div className="relative mx-auto w-full max-w-sm">
+      <div className="absolute -inset-4 rotate-3 rounded-[2rem] border border-cyan-300/15 bg-cyan-300/5" />
+      <div className="relative rounded-[2rem] border border-white/15 bg-slate-900 p-4 shadow-2xl shadow-cyan-950/40">
+        <div className="mb-5 flex items-center justify-between text-xs text-slate-400">
+          <span>RYUU / SHUFFLE DECK</span>
+          <span className="text-emerald-300">● Alive</span>
+        </div>
+        <div className="relative aspect-square rounded-2xl bg-slate-950/70">
+          {order.map((cardIndex, stackIndex) => {
+            const card = cards[cardIndex];
+            const isTopCard = stackIndex === 0;
             return (
-              <motion.button
-                key={social.name}
-                onClick={() => setPopupData(social)}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className={cardClass}
+              <motion.div
+                key={cardIndex}
+                layout
+                animate={{
+                  scale: 1 - stackIndex * 0.035,
+                  y: stackIndex * 10,
+                  x: stackIndex * 5,
+                  rotate: stackIndex === 0 ? 0 : stackIndex % 2 === 0 ? -3 : 3,
+                  opacity: 1 - stackIndex * 0.12,
+                }}
+                transition={{ type: 'spring', stiffness: 240, damping: 22 }}
+                className={`absolute inset-0 overflow-hidden rounded-2xl border border-white/10 bg-slate-950 ${isTopCard ? 'z-30 cursor-pointer' : 'z-20'}`}
+                onClick={isTopCard ? handleCardTap : undefined}
               >
-                <CardContent social={social} />
-              </motion.button>
+                <img
+                  src={card.image}
+                  alt={`${card.label} profile card`}
+                  className={`h-full w-full object-center object-contain origin-center ${card.image === poseOne ? 'scale-[1.35] -translate-y-[12%]' : ''}`}
+                />
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 to-transparent px-4 pb-4 pt-10">
+                  <p className="text-[10px] font-semibold tracking-[0.2em] text-cyan-300">{card.label}</p>
+                </div>
+              </motion.div>
             );
-          }
-
-          return (
-            <motion.a
-              key={social.name}
-              href={social.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              whileHover={{ scale: 1.05, y: -5 }}
-              className={cardClass}
-            >
-              <CardContent social={social} />
-            </motion.a>
-          );
-        })}
+          })}
+        </div>
+        <div className="flex items-center justify-between px-2 pb-1 pt-5">
+          <span className="text-sm font-semibold text-slate-100">Ryuu</span>
+          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Creator / Builder</span>
+        </div>
       </div>
-
-      <AnimatePresence>
-        {popupData && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setPopupData(null)}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-slate-900 border border-slate-700/50 p-8 rounded-3xl flex flex-col gap-4 w-full max-w-sm shadow-[0_0_40px_rgba(0,0,0,0.5)]"
-            >
-              <div className="text-center mb-2">
-                <h3 className={`text-3xl font-black bg-clip-text text-transparent bg-gradient-to-r ${popupData.color}`}>
-                  {popupData.name}
-                </h3>
-                <p className="text-slate-400 text-sm mt-2">Pilih akun yang ingin dituju</p>
-              </div>
-              
-              <div className="flex flex-col gap-3">
-                {popupData.accounts.map(acc => (
-                  <a 
-                    key={acc.label} 
-                    href={acc.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="p-4 bg-slate-800/80 hover:bg-slate-700 rounded-xl text-center font-bold text-white transition-all border border-slate-600 hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-                  >
-                    {acc.label}
-                  </a>
-                ))}
-              </div>
-
-              <button 
-                onClick={() => setPopupData(null)} 
-                className="mt-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-all"
-              >
-                Tutup
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </section>
+    </div>
   );
 };
 
-const ContactSection = () => {
-  return (
-    <section id="contact" className="py-20 px-6 max-w-3xl mx-auto text-center">
-      <h2 className="text-4xl font-bold mb-8">Let's Collaborate</h2>
-      <p className="mb-10 opacity-70">Have a project in mind? Let's build something amazing together.</p>
-      
-      <form className="space-y-4 text-left">
+const HeroProfileCard = () => (
+  <div className="relative mx-auto w-full max-w-sm">
+    <div className="absolute -inset-5 rounded-[2rem] border border-cyan-300/10 bg-cyan-300/5 blur-sm" />
+    <div className="relative overflow-hidden rounded-[1.75rem] border border-white/15 bg-white/[0.06] p-5 shadow-2xl shadow-cyan-950/40 backdrop-blur-md">
+      <div className="mb-5 flex items-center justify-between text-xs text-slate-400">
+        <span>RYUU / YUE</span>
+        <span className="text-emerald-300">● Alive</span>
+      </div>
+      <div className="flex aspect-square items-center justify-center rounded-2xl bg-slate-950/70">
+        <img
+          src={heroImage}
+          alt="Yue character illustration"
+          className="w-4/5"
+        />
+      </div>
+      <div className="mt-5 flex items-end justify-between">
         <div>
-          <label className="block mb-2 font-medium opacity-80">Name</label>
-          <input type="text" className="w-full p-4 bg-black/20 border border-white/10 rounded-xl focus:border-cyan-400 outline-none transition-all placeholder:text-slate-500" placeholder="John Doe" />
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Currently sleeping</p>
+          <p className="mt-1 font-semibold text-slate-100">ALIVE FOR YUE</p>
         </div>
-        <div>
-          <label className="block mb-2 font-medium opacity-80">Email</label>
-          <input type="email" className="w-full p-4 bg-black/20 border border-white/10 rounded-xl focus:border-cyan-400 outline-none transition-all placeholder:text-slate-500" placeholder="john@example.com" />
-        </div>
-        <div>
-          <label className="block mb-2 font-medium opacity-80">Message</label>
-          <textarea rows="4" className="w-full p-4 bg-black/20 border border-white/10 rounded-xl focus:border-cyan-400 outline-none transition-all placeholder:text-slate-500" placeholder="Tell me about your project..."></textarea>
-        </div>
-        <button type="button" className="w-full py-4 mt-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-purple-500/30 transition-all font-mono tracking-widest">
-          SEND MESSAGE
-        </button>
-      </form>
-    </section>
-  );
-};
+        <span className="text-3xl text-cyan-300">✦</span>
+      </div>
+    </div>
+  </div>
+);
 
 const Topbar = () => {
   const { toggleTheme, isDarkMode } = useTheme();
 
   return (
-    <nav className="fixed top-0 w-full z-50 p-6 flex justify-between items-center bg-transparent backdrop-blur-[2px]">
-      <div className="font-black text-2xl tracking-tighter">
-        RYUU<span className="text-cyan-400"> PORTOFOLIO</span>
-      </div>
-        <div className="flex gap-4 items-center">
-        <button 
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/75 backdrop-blur-xl">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
+        <a href="#top" className="text-lg font-bold tracking-tight text-white">
+          Ryuu<span className="text-cyan-300">Portofolio.</span>
+        </a>
+        <button
           onClick={toggleTheme}
-          className="p-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition-all"
-          title="Toggle Theme"
+          className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cyan-300/60 hover:text-cyan-200"
+          title="Toggle theme"
         >
-          {isDarkMode ? '☀️ Light' : '🌙 Dark'}
+          {isDarkMode ? '☀ Light' : '☾ Dark'}
         </button>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 };
 
-const ScrollToTopButton = () => {
-  const [isVisible, setIsVisible] = useState(false);
+const HeroSection = () => (
+  <section id="top" className="relative overflow-hidden">
+    <div className="pointer-events-none absolute -left-32 top-16 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
+    <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-24 pt-20 sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:pb-32 lg:pt-28">
+      <motion.div initial="hidden" animate="visible" variants={reveal}>
+        <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
+          Usually awake, sometimes sleepy
+        </p>
+        <h1 className="max-w-3xl text-5xl font-black leading-[1.05] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
+          Still learning, <span className="text-cyan-300">still building.</span>
+        </h1>
+        <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300/80">
+          I&apos;m Ryuu — a beginner developer who enjoys mixing code, design, and a little bit of game stuff.
+          I don&apos;t always love coding, but I do love turning random ideas into something real.
+        </p>
+        <div className="mt-9 flex flex-wrap gap-3">
+          <a href="#projects" className="rounded-full bg-cyan-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-cyan-200">
+            Take a look around <span aria-hidden="true">↓</span>
+          </a>
+          <a href="#contact" className="rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-slate-100 transition hover:-translate-y-0.5 hover:border-cyan-300/60 hover:text-cyan-200">
+            Say hi
+          </a>
+        </div>
+        <div className="mt-12 flex gap-8 border-t border-white/10 pt-5 text-sm text-slate-400">
+          <span><strong className="mr-1 text-xl text-white">01</strong> Coding, reluctantly</span>
+          <span><strong className="mr-1 text-xl text-white">02</strong> Yue enthusiast</span>
+          <span><strong className="mr-1 text-xl text-white">03</strong> Powered by coffee</span>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9, rotate: 3 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
+        className="relative mx-auto w-full max-w-md"
+      >
+        <HeroProfileCard />
+      </motion.div>
+    </div>
+  </section>
+);
+
+const SkillsSection = () => {
+  const { projects, categories, loading } = usePortfolioData();
+
+  return (
+    <section id="about" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+      <SectionHeading
+        eyebrow="Sedikit cerita"
+        title="I like making things that feel right."
+        description="Portofolio ini tumbuh dari berbagai eksperimen kecil — some worked, some didn&apos;t, and that&apos;s okay."
+      />
+      <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+        <motion.div variants={reveal} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }} className="rounded-3xl border border-white/10 bg-white/[0.045] p-7">
+          <p className="text-sm leading-7 text-slate-300/80">
+            Dari ide yang masih berantakan sampai jadi sesuatu yang bisa dipakai, I care about the little details:
+            struktur yang jelas, visual yang punya karakter, dan experience yang terasa nyaman.
+          </p>
+          <div className="mt-8 flex items-center gap-8 border-t border-white/10 pt-6">
+            <div><p className="text-3xl font-bold text-cyan-300">{projects.length}</p><p className="mt-1 text-xs uppercase tracking-wider text-slate-500">Projects</p></div>
+            <div><p className="text-3xl font-bold text-cyan-300">{categories.length}</p><p className="mt-1 text-xs uppercase tracking-wider text-slate-500">Categories</p></div>
+          </div>
+        </motion.div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {loading ? <div className="animate-pulse text-slate-400">Computing categories...</div> : categories.map((category, index) => (
+            <motion.div
+              key={category.name}
+              variants={reveal}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ delay: index * 0.08 }}
+              className="rounded-3xl border border-white/10 bg-white/[0.045] p-5 transition-colors hover:border-cyan-300/30"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="font-semibold text-slate-100">{category.name}</span>
+                <span className="font-mono text-sm text-cyan-300">{Math.round(category.progress)}%</span>
+              </div>
+              <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${category.progress}%` }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, delay: index * 0.1 }}
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-violet-400"
+                />
+              </div>
+              <p className="mt-3 text-xs text-slate-500">{category.count} project{category.count === 1 ? '' : 's'}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const AboutSection = () => (
+  <section id="profile" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+    <div className="grid items-center gap-10 lg:grid-cols-[0.85fr_1.15fr]">
+      <motion.div
+        variants={reveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.25 }}
+        className="relative mx-auto w-full max-w-sm"
+      >
+        <ProfileShuffleCard />
+      </motion.div>
+      <div>
+        <SectionHeading
+          eyebrow="Di balik layar"
+          title="There&apos;s a person behind the pixels."
+          description="Aku suka mencari balance antara struktur dan ekspresi: solving a real problem, lalu membuatnya terasa lebih personal lewat design."
+        />
+        <motion.div
+          variants={reveal}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          className="grid gap-4 sm:grid-cols-3"
+        >
+          {[
+            ['01', 'Curiosity', 'Selalu ada hal baru untuk dipelajari.'],
+            ['02', 'Craft', 'Detail kecil tetap worth caring about.'],
+            ['03', 'Clarity', 'Making complicated things easier to understand.'],
+          ].map(([number, title, text]) => (
+            <div key={number} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
+              <span className="font-mono text-xs text-cyan-300">{number}</span>
+              <h3 className="mt-4 font-semibold text-slate-100">{title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{text}</p>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </div>
+  </section>
+);
+
+const SoftwareSection = () => {
+  const software = [
+    { name: 'VS Code', detail: 'Development', mark: '</>' },
+    { name: 'Photoshop', detail: 'Visual design', mark: 'Ps' },
+    { name: 'After Effects', detail: 'Motion design', mark: 'Ae' },
+    { name: 'Figma', detail: 'Interface design', mark: 'Fg' },
+    { name: 'Blender', detail: '3D experiments', mark: 'B' },
+    { name: 'Git', detail: 'Version control', mark: '⌘' },
+  ];
+
+  return (
+    <section id="tools" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+      <SectionHeading
+        eyebrow="Tools yang dipakai"
+        title="A few tools behind the work."
+        description="Campuran tools untuk coding, design, dan creative experiments — cukup untuk mengubah ide random jadi sesuatu yang bisa dilihat."
+      />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {software.map((tool, index) => (
+          <motion.div
+            key={tool.name}
+            variants={reveal}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ delay: index * 0.06 }}
+            className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.045] p-4 transition hover:-translate-y-1 hover:border-cyan-300/35"
+          >
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 font-mono text-sm font-bold text-cyan-300 transition group-hover:bg-cyan-300 group-hover:text-slate-950">
+              {tool.mark}
+            </span>
+            <div>
+              <h3 className="font-semibold text-slate-100">{tool.name}</h3>
+              <p className="mt-1 text-xs text-slate-500">{tool.detail}</p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const ExperienceCarousel = () => {
+  const { projects, loading } = usePortfolioData();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const slides = projects.filter(project => project.imageUrl).slice(0, 8);
 
   useEffect(() => {
-    const handleScroll = () => {
-      // Show button if scrolled past 400px
-      if (window.scrollY > 400) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
-    };
+    if (slides.length < 2) return undefined;
+    const timer = setInterval(() => {
+      setActiveIndex(index => (index + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+  const activeProject = slides[activeIndex];
+
+  return (
+    <section id="experience" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+      <SectionHeading
+        eyebrow="Masih dalam proses"
+        title="A few snapshots along the way."
+        description="Beberapa momen dari project yang pernah dikerjakan. Carousel ini akan update otomatis saat ada project baru dengan gambar."
+      />
+      {loading ? (
+        <div className="animate-pulse rounded-3xl border border-white/10 bg-white/[0.045] p-12 text-center text-slate-400">Sebentar, lagi mengambil project snapshots...</div>
+      ) : activeProject ? (
+        <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
+          <motion.div
+            key={activeProject.id}
+            initial={{ opacity: 0, x: 18 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.45 }}
+            className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.045]"
+          >
+            <div className="relative aspect-video overflow-hidden bg-slate-900">
+              <img src={activeProject.imageUrl} alt={`${activeProject.title} project screenshot`} className="h-full w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/35 to-transparent" />
+              <div className="carousel-caption absolute bottom-5 left-5 right-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{activeProject.category}</p>
+                <h3 className="mt-2 text-2xl font-bold text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.85)]">{activeProject.title}</h3>
+                <p className="mt-1 text-xs font-medium text-white/80">Diposting {formatProjectDate(activeProject.createdAt)}</p>
+              </div>
+            </div>
+          </motion.div>
+          <div className="flex flex-col justify-between rounded-3xl border border-white/10 bg-white/[0.045] p-6">
+            <div>
+              <p className="text-sm leading-7 text-slate-300/75">
+                {activeProject.description || 'Sedikit glimpse dari experiment, project, atau visual direction yang pernah dibuat.'}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {(activeProject.technologies || activeProject.softwareUsed || []).map(tag => (
+                  <span key={tag} className="rounded-full bg-white/5 px-3 py-1.5 text-xs text-slate-400">{tag}</span>
+                ))}
+              </div>
+            </div>
+            <div className="mt-8 flex items-center justify-between gap-4">
+              <div className="flex gap-1.5">
+                {slides.map((slide, index) => (
+                  <button key={slide.id} onClick={() => setActiveIndex(index)} aria-label={`Show ${slide.title}`} className={`h-1.5 rounded-full transition-all ${index === activeIndex ? 'w-8 bg-cyan-300' : 'w-2 bg-slate-700 hover:bg-slate-500'}`} />
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setActiveIndex(index => (index - 1 + slides.length) % slides.length)} className="rounded-full border border-white/10 px-3 py-1.5 text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-200" aria-label="Previous project">←</button>
+                <button onClick={() => setActiveIndex(index => (index + 1) % slides.length)} className="rounded-full border border-white/10 px-3 py-1.5 text-slate-300 transition hover:border-cyan-300/40 hover:text-cyan-200" aria-label="Next project">→</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.03] p-12 text-center text-slate-500">
+          Tambahkan gambar lewat admin dashboard supaya project-nya muncul di sini.
+        </div>
+      )}
+    </section>
+  );
+};
+
+const ProjectCard = ({ project }) => {
+  const isWeb = project.category === 'Web Development';
+  const targetUrl = isWeb && project.projectUrl ? project.projectUrl : `/project/${project.id}`;
+  const content = (
+    <>
+      <div className="relative h-52 overflow-hidden bg-slate-900">
+        {project.imageUrl ? <img src={project.imageUrl} alt={project.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" /> : <div className="flex h-full items-center justify-center text-sm text-slate-600">No preview yet</div>}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 to-transparent" />
+        <span className="absolute bottom-4 left-5 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">{project.category}</span>
+      </div>
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-xl font-bold text-slate-100">{project.title}</h3>
+          <span className="shrink-0 text-right text-[11px] font-medium text-slate-400">{formatProjectDate(project.createdAt)}</span>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">{(project.technologies || project.softwareUsed || []).slice(0, 4).map(tag => <span key={tag} className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-slate-400">{tag}</span>)}</div>
+      </div>
+    </>
+  );
+
+  return isWeb && project.projectUrl ? <a href={targetUrl} target="_blank" rel="noopener noreferrer" className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[0.045] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40">{content}</a> : <Link to={targetUrl} className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[0.045] transition duration-300 hover:-translate-y-1 hover:border-cyan-300/40">{content}</Link>;
+};
+
+const ProjectsSection = () => {
+  const { projects, loading } = usePortfolioData();
+  const [filter, setFilter] = useState('All');
+  const categories = ['All', 'Web Development', 'Design/Editing', 'Fotografi', 'Game Development'];
+  const filteredProjects = filter === 'All' ? projects : projects.filter(project => project.category === filter);
+
+  return (
+    <section id="projects" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+      <SectionHeading eyebrow="Selected work" title="A few things I&apos;ve made." description="Lihat beberapa project yang ikut membentuk skill dan cara pandangku." />
+      <div className="mb-8 flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+        {categories.map(category => <button key={category} onClick={() => setFilter(category)} className={`whitespace-nowrap rounded-full px-4 py-2 text-sm transition ${filter === category ? 'bg-cyan-300 font-semibold text-slate-950' : 'border border-white/10 bg-white/5 text-slate-300 hover:border-cyan-300/40'}`}>{category}</button>)}
+      </div>
+      {loading ? <div className="animate-pulse text-slate-400">Lagi memuat project...</div> : <motion.div layout className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{filteredProjects.slice(0, 6).map(project => <ProjectCard key={project.id} project={project} />)}</motion.div>}
+      {!loading && filteredProjects.length === 0 && <p className="py-10 text-center text-slate-500">Belum ada project di kategori ini.</p>}
+      {!loading && projects.length > 6 && <div className="mt-10 text-center"><Link to="/projects" className="text-sm font-semibold text-cyan-300 transition hover:text-cyan-200">Lihat semua project →</Link></div>}
+    </section>
+  );
+};
+
+const SocialMediaSection = () => {
+  const socials = [
+    { name: 'Instagram', url: 'https://www.instagram.com/kanzaki.ryuu', color: 'from-pink-500 to-orange-400' },
+    { name: 'Linktree', url: 'https://linktr.ee/yuukanzaki', color: 'from-green-500 to-emerald-400' },
+    { name: 'Discord', url: 'https://discord.gg/FqzHvqvFcp', color: 'from-indigo-500 to-purple-500' },
+  ];
+
+  return (
+    <section id="social" className="mx-auto max-w-6xl px-5 py-24 sm:px-8">
+      <SectionHeading eyebrow="Find me online" title="Say hello, wherever you are." description="Beberapa tempat untuk share work, ide, dan hal-hal baru yang sedang dipelajari." />
+      <div className="grid gap-4 sm:grid-cols-3">
+        {socials.map((social, index) => (
+          <motion.a key={social.name} href={social.url} target="_blank" rel="noopener noreferrer" variants={reveal} initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ delay: index * 0.1 }} className={`group rounded-3xl bg-gradient-to-br ${social.color} p-6 text-white shadow-lg transition hover:-translate-y-1`}>
+            <div className="flex items-center justify-between"><span className="text-lg font-bold">{social.name}</span><span className="transition group-hover:translate-x-1">↗</span></div>
+            <p className="mt-10 text-sm text-white/75">Connect with me</p>
+          </motion.a>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const ContactSection = () => (
+  <section id="contact" className="mx-auto max-w-4xl px-5 py-24 sm:px-8">
+    <div className="rounded-[2rem] border border-cyan-300/20 bg-cyan-300/[0.06] p-8 text-center sm:p-12">
+      <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-300">Have an idea?</p>
+      <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Let&apos;s make it feel right.</h2>
+      <p className="mx-auto mt-4 max-w-xl leading-7 text-slate-300/75">Tell me what you are working on, what is not working yet, or simply say hello.</p>
+      <a href="mailto:hello@ryuu.dev" className="mt-8 inline-flex rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200">Start a conversation →</a>
+    </div>
+  </section>
+);
+
+const ScrollToTopButton = () => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 500);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
-  return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.5, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.5, y: 20 }}
-          onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 p-4 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-full shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-colors focus:outline-none"
-          title="Scroll to Top"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 font-bold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-          </svg>
-        </motion.button>
-      )}
-    </AnimatePresence>
-  );
+  return <AnimatePresence>{visible && <motion.button initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-6 right-6 z-40 rounded-full border border-white/20 bg-slate-900/90 p-3 text-cyan-300 shadow-xl backdrop-blur" title="Back to top">↑</motion.button>}</AnimatePresence>;
 };
 
-const Home = () => {
-  return (
-    <div className="relative">
-      <Topbar />
+const Home = () => (
+  <div className="home-page min-h-screen bg-slate-950 font-sans text-slate-100 selection:bg-cyan-300 selection:text-slate-950">
+    <Topbar />
+    <main>
       <HeroSection />
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <AboutSection />
       <SkillsSection />
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <SoftwareSection />
+      <ExperienceCarousel />
       <ProjectsSection />
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       <SocialMediaSection />
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       <ContactSection />
-      
-      <footer className="text-center py-8 opacity-50 text-sm">
-        © {new Date().getFullYear()} Portfolio. All rights reserved.
-      </footer>
-
-      <ScrollToTopButton />
-    </div>
-  );
-};
+    </main>
+    <footer className="border-t border-white/10 px-5 py-8 text-center text-sm text-slate-500">
+      © {new Date().getFullYear()} Ryuu. Made with intention.
+    </footer>
+    <ScrollToTopButton />
+  </div>
+);
 
 export default Home;
