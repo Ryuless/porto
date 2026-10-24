@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { usePortfolioData } from '../../hooks/usePortfolioData';
 import { useTheme } from '../../context/ThemeContext';
+import { useBackgroundMusic } from '../../hooks/useBackgroundMusic';
 import heroImage from '../../assets/yue.png';
 import poseOne from '../../assets/pose1.png';
 
@@ -136,6 +137,7 @@ const HeroProfileCard = () => (
 
 const Topbar = () => {
   const { toggleTheme, isDarkMode } = useTheme();
+  const { isPlaying, toggleMusic } = useBackgroundMusic();
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/75 backdrop-blur-xl">
@@ -143,17 +145,32 @@ const Topbar = () => {
         <a href="#top" className="text-lg font-bold tracking-tight text-white">
           Ryuu<span className="text-cyan-300">Portofolio.</span>
         </a>
-        <button
-          onClick={toggleTheme}
-          className={`fixed right-25 top-3 z-[220] rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-            isDarkMode
-              ? 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-300/60 hover:text-cyan-200'
-              : 'border-slate-400 bg-white/90 text-slate-700 shadow-sm hover:border-slate-600 hover:text-slate-950'
-          }`}
-          title="Toggle theme"
-        >
-          {isDarkMode ? '☀ Light' : '☾ Dark'}
-        </button>
+        <div className="fixed right-5 top-3 z-[220] flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+              isDarkMode
+                ? 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-300/60 hover:text-cyan-200'
+                : 'border-slate-400 bg-white/90 text-slate-700 shadow-sm hover:border-slate-600 hover:text-slate-950'
+            }`}
+            title="Toggle theme"
+          >
+            {isDarkMode ? '☀ Light' : '☾ Dark'}
+          </button>
+          <button
+            type="button"
+            onClick={toggleMusic}
+            aria-label={isPlaying ? 'Matikan musik latar' : 'Nyalakan musik latar'}
+            className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-wide transition ${
+              isDarkMode
+                ? 'border-cyan-300/30 bg-slate-950/85 text-cyan-100 hover:border-cyan-200/70 hover:bg-slate-900'
+                : 'border-slate-400 bg-white/90 text-slate-700 shadow-sm hover:border-slate-600 hover:bg-white'
+            }`}
+          >
+            <span aria-hidden="true">♫</span>
+            <span className={isPlaying ? '' : 'line-through'}>music</span>
+          </button>
+        </div>
       </nav>
     </header>
   );
